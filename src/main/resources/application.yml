@@ -1,0 +1,37 @@
+server:
+  servlet:
+    encoding:
+      charset: UTF-8    # 문자 인코딩을 UTF-8로 설정
+      enabled: true     # 인코딩 설정을 활성화
+      force: true       # 요청과 응답 모두 강제로 UTF-8 적용
+
+spring:
+  application:
+    name: sp_board
+  profiles:
+    active: local
+  config:
+    import: optional:file:.env[.properties]
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        # Spring Boot 기본값이 SpringPhysicalNamingStrategy -> 없어도 동작 (명시적으로 적어주면 안정성)
+        spring.jpa.hibernate.naming.physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+        jdbc:
+          time-zone: Asia/Seoul
+  servlet:
+    multipart:
+      max-file-size: 10MB     # 단일 파일 최대 업로드 크기
+      max-request-size: 20MB  # 전체 요청(여러 파일 합산) 최대 크기
+
+logging:
+  level:
+    p6spy: DEBUG
+    com.p6spy.engine.spy: DEBUG
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
