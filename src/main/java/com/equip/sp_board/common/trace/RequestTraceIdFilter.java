@@ -1,16 +1,16 @@
 package com.equip.sp_board.common.trace;
 
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.UUID;
 
-// FilterRegistrationBean 등록
+@Component
 public class RequestTraceIdFilter extends OncePerRequestFilter {
     // 요청별 Trace ID를 저장할 ThreadLocal
     // ThreadLocal 사용하면 같은 쓰레드 내 어디서든 접근 가능
