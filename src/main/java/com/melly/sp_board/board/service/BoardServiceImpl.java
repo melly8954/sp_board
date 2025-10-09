@@ -3,10 +3,7 @@ package com.melly.sp_board.board.service;
 import com.melly.sp_board.board.domain.Board;
 import com.melly.sp_board.board.domain.BoardStatus;
 import com.melly.sp_board.board.domain.BoardType;
-import com.melly.sp_board.board.dto.BoardFilter;
-import com.melly.sp_board.board.dto.BoardListResponse;
-import com.melly.sp_board.board.dto.CreateBoardRequest;
-import com.melly.sp_board.board.dto.CreateBoardResponse;
+import com.melly.sp_board.board.dto.*;
 import com.melly.sp_board.board.repository.BoardRepository;
 import com.melly.sp_board.board.repository.BoardTypeRepository;
 import com.melly.sp_board.common.dto.PageResponseDto;
@@ -117,6 +114,7 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PageResponseDto<BoardListResponse> searchBoard(BoardFilter filter) {
         Pageable pageable = filter.getPageable();
 
@@ -144,6 +142,40 @@ public class BoardServiceImpl implements BoardService {
                 .first(page.isFirst())
                 .last(page.isLast())
                 .empty(page.isEmpty())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BoardResponse getBoard(Long boardId, Long currentUserId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 게시글은 존재하지 않습니다."));
+
+        boolean isOwner = board.getWriter().getMemberId().equals(currentUserId);
+
+        String relatedType = "board_" + board.getBoardType().getName();
+
+        List<FileDto> files = fileRepository.findAllByRelatedTypeAndRelatedId(relatedType, boardId)
+                .stream()
+                .map(file -> FileDto.builder()
+                        .fileId(file.getFileId())
+                        .originalName(file.getOriginalName())
+                        .filePath(file.getFilePath())
+                        .build())
+                .toList();
+
+        return BoardResponse.builder()
+                .boardId(boardId)
+                .boardType(board.getBoardType().getName())
+                .title(board.getTitle())
+                .content(board.getContent())
+                .writerName(board.getWriter().getName())
+                .isOwner(isOwner)
+                .viewCount(board.getViewCount())
+                .likeCount(board.getLikeCount())
+                .files(files)
+                .createdAt(board.getCreatedAt())
+                .updatedAt(board.getUpdatedAt())
                 .build();
     }
 }
