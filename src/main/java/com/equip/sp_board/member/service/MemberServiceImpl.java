@@ -2,6 +2,9 @@ package com.equip.sp_board.member.service;
 
 import com.equip.sp_board.common.exception.CustomException;
 import com.equip.sp_board.common.exception.ErrorType;
+import com.equip.sp_board.filestorage.domain.FileMeta;
+import com.equip.sp_board.filestorage.repository.FileRepository;
+import com.equip.sp_board.filestorage.service.iface.FileService;
 import com.equip.sp_board.member.domain.Member;
 import com.equip.sp_board.member.domain.MemberRole;
 import com.equip.sp_board.member.domain.MemberStatus;
@@ -12,16 +15,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FileRepository fileRepository;
+    private final FileService fileService;
 
     @Override
     @Transactional
-    public CreateMemberResponse createMember(CreateMemberRequest dto) {
+    public CreateMemberResponse createMember(CreateMemberRequest dto, MultipartFile file) {
         if(memberRepository.existsByUsername(dto.getUsername())){
             throw new CustomException(ErrorType.BAD_REQUEST, "이미 사용 중인 username 입니다.");
         }
@@ -38,10 +44,28 @@ public class MemberServiceImpl implements MemberService {
                 .build();
         memberRepository.save(member);
 
+        String profileImageUrl = "";
+        if (file != null && !file.isEmpty()) {
+            profileImageUrl = fileService.saveFile(file, "member");
+
+            FileMeta fileMeta = FileMeta.builder()
+                    .relatedType("member")               // 어떤 엔티티와 연관된 파일인지
+                    .relatedId(member.getMemberId())      // 방금 생성된 멤버 ID
+                    .originalName(file.getOriginalFilename())
+                    .uniqueName(profileImageUrl.substring(profileImageUrl.lastIndexOf("/") + 1))
+                    .filePath(profileImageUrl)
+                    .fileType(file.getContentType())
+                    .fileSize(file.getSize())
+                    .fileOrder(1)
+                    .build();
+            fileRepository.save(fileMeta);
+        }
+
         return CreateMemberResponse.builder()
                 .memberId(member.getMemberId())
                 .username(member.getUsername())
                 .name(member.getName())
+                .profileImageUrl(profileImageUrl)
                 .createdAt(member.getCreatedAt())
                 .build();
     }

@@ -14,6 +14,7 @@ public class CreateMemberResponse {
     private Long memberId;
     private String username;
     private String name;
+    private String profileImageUrl;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
 }
