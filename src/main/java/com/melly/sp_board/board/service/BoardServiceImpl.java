@@ -52,8 +52,16 @@ public class BoardServiceImpl implements BoardService {
         boardRepository.save(board);
 
         List<FileMeta> savedFiles = new ArrayList<>();
-
-        if(files != null && !files.isEmpty()) {
+        // null 체크 + 빈 파일 제거
+        if (files == null) {
+            files = List.of();
+        } else {
+            files = files.stream()
+                    .filter(f -> f != null && !f.isEmpty())
+                    .toList();
+        }
+        
+        if (!files.isEmpty()) {
             int fileOrder = 0;
             String typeKey = "board_" + boardType.getName();
             List<String> fileUrls = fileService.saveFiles(files, typeKey);

@@ -53,9 +53,6 @@ public class LocalFileStorageStrategy implements FileStorageStrategy {
 
     @Override
     public StoredFile store(MultipartFile file, String typeKey) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("파일이 비어있습니다.");
-        }
         return store(List.of(file), typeKey).get(0);
     }
 

@@ -1,6 +1,8 @@
 package com.melly.sp_board.filestorage.service;
 
 import com.melly.sp_board.common.config.FileConfig;
+import com.melly.sp_board.common.exception.CustomException;
+import com.melly.sp_board.common.exception.ErrorType;
 import com.melly.sp_board.filestorage.domain.StoredFile;
 import com.melly.sp_board.filestorage.service.iface.FileService;
 import com.melly.sp_board.filestorage.service.iface.FileStorageStrategy;
@@ -30,6 +32,10 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public List<String> saveFiles(List<MultipartFile> files, String typeKey) {
+        if (files == null || files.isEmpty()) {
+            throw new CustomException(ErrorType.NOT_FOUND, "첨부 파일이 없습니다.");
+        }
+
         List<StoredFile> savedFiles = getStrategy().store(files, typeKey);
 
         return savedFiles.stream()
@@ -39,6 +45,10 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String saveFile(MultipartFile file, String typeKey) {
+        if (file == null || file.isEmpty()) {
+            throw new CustomException(ErrorType.NOT_FOUND, "첨부 파일이 없습니다.");
+        }
+
         StoredFile saved = getStrategy().store(file, typeKey);
         return getStrategy().generateFileUrl(saved, typeKey);
     }

@@ -22,7 +22,7 @@ public class MemberController implements ResponseController {
 
     @PostMapping("")
     public ResponseEntity<ResponseDto<CreateMemberResponse>> createMember(@RequestPart(value = "data") CreateMemberRequest dto,
-                                                                          @RequestPart(value = "file") MultipartFile file){
+                                                                          @RequestPart(value = "file", required = false) MultipartFile file){
         String traceId = RequestTraceIdFilter.getTraceId();
         log.info("[회원가입 요청 API] TraceId={}", traceId);
 
