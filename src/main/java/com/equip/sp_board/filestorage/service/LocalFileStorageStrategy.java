@@ -60,6 +60,13 @@ public class LocalFileStorageStrategy implements FileStorageStrategy {
     }
 
     @Override
+    public String generateFileUrl(StoredFile file, String typeKey) {
+        String baseUrl = fileConfig.getAccessUrlBase().replaceAll("/+$", "");
+
+        return String.format("%s/%s/%s", baseUrl, typeKey.replace("_","/"), file.getLocalFileName());
+    }
+
+    @Override
     public Resource load(String path) {
         return null;
     }

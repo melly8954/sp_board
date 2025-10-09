@@ -19,26 +19,28 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FileServiceImpl implements FileService {
     private final FileConfig fileConfig;
-    private final FileStorageStrategy fileStorageStrategy;
+    private final FileStorageStrategy localStrategy;
+    private final FileStorageStrategy s3Strategy;
+
+    private boolean useLocal = true; // 클래스 레벨에서 선언
+
+    private FileStorageStrategy getStrategy() {
+        return useLocal ? localStrategy : s3Strategy;
+    }
 
     @Override
     public List<String> saveFiles(List<MultipartFile> files, String typeKey) {
-        List<StoredFile> savedFilenames = fileStorageStrategy.store(files, typeKey);
+        List<StoredFile> savedFiles = getStrategy().store(files, typeKey);
 
-        String baseUrl = fileConfig.getAccessUrlBase().replaceAll("/+$", ""); // 끝의 슬래시 모두 제거
-
-        return savedFilenames.stream()
-                .map(file -> String.format("%s/%s/%s", baseUrl, typeKey.replace("_","/"), file.getLocalFileName()))
+        return savedFiles.stream()
+                .map(f -> getStrategy().generateFileUrl(f, typeKey))
                 .toList();
     }
 
     @Override
     public String saveFile(MultipartFile file, String typeKey) {
-        StoredFile saved = fileStorageStrategy.store(file, typeKey);
-
-        String baseUrl = fileConfig.getAccessUrlBase().replaceAll("/+$", ""); // 끝의 슬래시 모두 제거
-
-        return String.format("%s/%s/%s", baseUrl, typeKey.replace("_", "/"), saved.getLocalFileName());
+        StoredFile saved = getStrategy().store(file, typeKey);
+        return getStrategy().generateFileUrl(saved, typeKey);
     }
 
     @Override
