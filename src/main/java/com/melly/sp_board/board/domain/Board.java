@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 public class Board extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="board__id")
+    @Column(name="board_id")
     private Long boardId;
 
     @ManyToOne(fetch = FetchType.LAZY)
