@@ -3,10 +3,13 @@ package com.melly.sp_board.board.service;
 import com.melly.sp_board.board.domain.Board;
 import com.melly.sp_board.board.domain.BoardStatus;
 import com.melly.sp_board.board.domain.BoardType;
+import com.melly.sp_board.board.dto.BoardFilter;
+import com.melly.sp_board.board.dto.BoardResponse;
 import com.melly.sp_board.board.dto.CreateBoardRequest;
 import com.melly.sp_board.board.dto.CreateBoardResponse;
 import com.melly.sp_board.board.repository.BoardRepository;
 import com.melly.sp_board.board.repository.BoardTypeRepository;
+import com.melly.sp_board.common.dto.PageResponseDto;
 import com.melly.sp_board.common.exception.CustomException;
 import com.melly.sp_board.common.exception.ErrorType;
 import com.melly.sp_board.filestorage.domain.FileMeta;
@@ -16,6 +19,8 @@ import com.melly.sp_board.filestorage.service.iface.FileService;
 import com.melly.sp_board.member.domain.Member;
 import com.melly.sp_board.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,7 +65,7 @@ public class BoardServiceImpl implements BoardService {
                     .filter(f -> f != null && !f.isEmpty())
                     .toList();
         }
-        
+
         if (!files.isEmpty()) {
             int fileOrder = 0;
             String typeKey = "board_" + boardType.getName();
@@ -108,6 +113,37 @@ public class BoardServiceImpl implements BoardService {
                 .status(BoardStatus.ACTIVE)
                 .files(fileDtoList)
                 .createdAt(board.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    public PageResponseDto<BoardResponse> searchBoard(BoardFilter filter) {
+        Pageable pageable = filter.getPageable();
+
+        Page<Board> page = boardRepository.findBoardByFilters(pageable, filter.getBoardTypeId());
+
+        List<BoardResponse> content =page.getContent().stream()
+                .map(b -> BoardResponse.builder()
+                        .boardId(b.getBoardId())
+                        .boardType(b.getBoardType().getName())
+                        .title(b.getTitle())
+                        .viewCount(b.getViewCount())
+                        .likeCount(b.getLikeCount())
+                        .writeName(b.getWriter().getName())
+                        .createdAt(b.getCreatedAt())
+                        .build())
+                .toList();
+
+        return PageResponseDto.<BoardResponse>builder()
+                .content(content)
+                .page(page.getNumber() + 1)
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .numberOfElements(page.getNumberOfElements())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .empty(page.isEmpty())
                 .build();
     }
 }

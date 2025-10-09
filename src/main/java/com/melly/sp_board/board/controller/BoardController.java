@@ -1,6 +1,8 @@
 package com.melly.sp_board.board.controller;
 
 import com.melly.sp_board.auth.security.PrincipalDetails;
+import com.melly.sp_board.board.dto.BoardFilter;
+import com.melly.sp_board.board.dto.BoardResponse;
 import com.melly.sp_board.board.dto.CreateBoardRequest;
 import com.melly.sp_board.board.dto.CreateBoardResponse;
 import com.melly.sp_board.board.service.BoardService;
@@ -28,7 +30,7 @@ public class BoardController implements ResponseController {
 
     @PostMapping("")
     public ResponseEntity<ResponseDto<CreateBoardResponse>> createBoard(@RequestPart(value = "data") CreateBoardRequest dto,
-                                                                        @RequestPart(value = "files") List<MultipartFile> files,
+                                                                        @RequestPart(value = "files", required = false) List<MultipartFile> files,
                                                                         @AuthenticationPrincipal PrincipalDetails principal) {
         String traceId = RequestTraceIdFilter.getTraceId();
         log.info("[게시글 등록 요청 API] TraceId={}", traceId);
@@ -36,5 +38,15 @@ public class BoardController implements ResponseController {
         CreateBoardResponse result = boardService.createBoard(dto, files, principal.getMember().getMemberId());
 
         return makeResponseEntity(traceId, HttpStatus.OK, null, "게시글 등록 성공", result);
+    }
+
+    @GetMapping("")
+    public ResponseEntity<ResponseDto<PageResponseDto<BoardResponse>>> searchBoard(@ModelAttribute BoardFilter filter) {
+        String traceId = RequestTraceIdFilter.getTraceId();
+        log.info("[게시글 목록 조회 요청 API] TraceId={}", traceId);
+
+        PageResponseDto<BoardResponse> result = boardService.searchBoard(filter);
+
+        return makeResponseEntity(traceId, HttpStatus.OK, null, "게시글 목록 조회 성공", result);
     }
 }

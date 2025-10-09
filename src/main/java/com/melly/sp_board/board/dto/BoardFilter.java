@@ -1,13 +1,15 @@
 package com.melly.sp_board.board.dto;
 
-import com.melly.sp_board.board.domain.BoardType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import com.melly.sp_board.common.dto.SearchParamDto;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 
 @Getter
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class BoardFilter {
-    private BoardType boardType;
+@SuperBuilder
+public class BoardFilter extends SearchParamDto {
+    private Long boardTypeId;
 }
