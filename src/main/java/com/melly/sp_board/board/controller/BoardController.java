@@ -2,7 +2,7 @@ package com.melly.sp_board.board.controller;
 
 import com.melly.sp_board.auth.security.PrincipalDetails;
 import com.melly.sp_board.board.dto.BoardFilter;
-import com.melly.sp_board.board.dto.BoardResponse;
+import com.melly.sp_board.board.dto.BoardListResponse;
 import com.melly.sp_board.board.dto.CreateBoardRequest;
 import com.melly.sp_board.board.dto.CreateBoardResponse;
 import com.melly.sp_board.board.service.BoardService;
@@ -10,7 +10,6 @@ import com.melly.sp_board.common.controller.ResponseController;
 import com.melly.sp_board.common.dto.PageResponseDto;
 import com.melly.sp_board.common.dto.ResponseDto;
 import com.melly.sp_board.common.trace.RequestTraceIdFilter;
-import com.melly.sp_board.member.domain.Member;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -41,11 +40,11 @@ public class BoardController implements ResponseController {
     }
 
     @GetMapping("")
-    public ResponseEntity<ResponseDto<PageResponseDto<BoardResponse>>> searchBoard(@ModelAttribute BoardFilter filter) {
+    public ResponseEntity<ResponseDto<PageResponseDto<BoardListResponse>>> searchBoard(@ModelAttribute BoardFilter filter) {
         String traceId = RequestTraceIdFilter.getTraceId();
         log.info("[게시글 목록 조회 요청 API] TraceId={}", traceId);
 
-        PageResponseDto<BoardResponse> result = boardService.searchBoard(filter);
+        PageResponseDto<BoardListResponse> result = boardService.searchBoard(filter);
 
         return makeResponseEntity(traceId, HttpStatus.OK, null, "게시글 목록 조회 성공", result);
     }

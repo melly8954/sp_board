@@ -4,7 +4,7 @@ import com.melly.sp_board.board.domain.Board;
 import com.melly.sp_board.board.domain.BoardStatus;
 import com.melly.sp_board.board.domain.BoardType;
 import com.melly.sp_board.board.dto.BoardFilter;
-import com.melly.sp_board.board.dto.BoardResponse;
+import com.melly.sp_board.board.dto.BoardListResponse;
 import com.melly.sp_board.board.dto.CreateBoardRequest;
 import com.melly.sp_board.board.dto.CreateBoardResponse;
 import com.melly.sp_board.board.repository.BoardRepository;
@@ -117,13 +117,13 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
-    public PageResponseDto<BoardResponse> searchBoard(BoardFilter filter) {
+    public PageResponseDto<BoardListResponse> searchBoard(BoardFilter filter) {
         Pageable pageable = filter.getPageable();
 
         Page<Board> page = boardRepository.findBoardByFilters(pageable, filter.getBoardTypeId());
 
-        List<BoardResponse> content =page.getContent().stream()
-                .map(b -> BoardResponse.builder()
+        List<BoardListResponse> content =page.getContent().stream()
+                .map(b -> BoardListResponse.builder()
                         .boardId(b.getBoardId())
                         .boardType(b.getBoardType().getName())
                         .title(b.getTitle())
@@ -134,7 +134,7 @@ public class BoardServiceImpl implements BoardService {
                         .build())
                 .toList();
 
-        return PageResponseDto.<BoardResponse>builder()
+        return PageResponseDto.<BoardListResponse>builder()
                 .content(content)
                 .page(page.getNumber() + 1)
                 .size(page.getSize())

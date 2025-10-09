@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @Builder
-public class BoardResponse {
+public class BoardListResponse {
     private Long boardId;
     private String boardType;
     private String title;
