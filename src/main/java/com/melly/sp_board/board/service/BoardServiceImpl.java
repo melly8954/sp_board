@@ -161,10 +161,17 @@ public class BoardServiceImpl implements BoardService {
 
         List<FileDto> files = fileRepository.findAllByRelatedTypeAndRelatedId(relatedType, boardId)
                 .stream()
-                .map(file -> FileDto.builder()
-                        .fileId(file.getFileId())
-                        .originalName(file.getOriginalName())
-                        .filePath(file.getFilePath())
+                .map(f -> FileDto.builder()
+                        .fileId(f.getFileId())
+                        .relatedType(f.getRelatedType())
+                        .relatedId(f.getRelatedId())
+                        .originalName(f.getOriginalName())
+                        .uniqueName(f.getUniqueName())
+                        .fileOrder(f.getFileOrder())
+                        .filePath(f.getFilePath())
+                        .fileType(f.getFileType())
+                        .fileSize(f.getFileSize())
+                        .createdAt(f.getCreatedAt())
                         .build())
                 .toList();
 
