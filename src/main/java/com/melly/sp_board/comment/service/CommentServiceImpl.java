@@ -73,21 +73,6 @@ public class CommentServiceImpl implements CommentService {
         Page<Comment> page = commentRepository.findParentComments(pageable, filter.getBoardId(), CommentStatus.ACTIVE);
         List<Comment> parentComments = page.getContent();
 
-        if (parentComments.isEmpty()) {
-            // 부모 댓글이 없으면 바로 빈 페이지 반환
-            return PageResponseDto.<CommentListResponse>builder()
-                    .content(List.of())
-                    .page(page.getNumber() + 1)
-                    .size(page.getSize())
-                    .totalElements(page.getTotalElements())
-                    .totalPages(page.getTotalPages())
-                    .numberOfElements(page.getNumberOfElements())
-                    .first(page.isFirst())
-                    .last(page.isLast())
-                    .empty(page.isEmpty())
-                    .build();
-        }
-
         // 부모 댓글 ID 추출
         List<Long> parentIds = parentComments.stream()
                 .map(Comment::getCommentId)
