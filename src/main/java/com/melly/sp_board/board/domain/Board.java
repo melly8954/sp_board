@@ -68,4 +68,12 @@ public class Board extends BaseEntity {
             this.viewCount++;
         }
     }
+
+    public void increaseLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decreaseLikeCount() {
+        this.likeCount--;
+    }
 }

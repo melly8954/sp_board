@@ -7,6 +7,7 @@ import com.melly.sp_board.common.controller.ResponseController;
 import com.melly.sp_board.common.dto.PageResponseDto;
 import com.melly.sp_board.common.dto.ResponseDto;
 import com.melly.sp_board.common.trace.RequestTraceIdFilter;
+import com.melly.sp_board.like.service.LikeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ import java.util.List;
 @RequestMapping("/api/v1/boards")
 public class BoardController implements ResponseController {
     private final BoardService boardService;
+    private final LikeService likeService;
 
     @PostMapping("")
     public ResponseEntity<ResponseDto<CreateBoardResponse>> createBoard(@RequestPart(value = "data") CreateBoardRequest dto,
@@ -79,5 +81,16 @@ public class BoardController implements ResponseController {
         boardService.softDeleteBoard(boardId, principal.getMember().getMemberId());
 
         return makeResponseEntity(traceId, HttpStatus.OK, null, "게시글 삭제 성공", null);
+    }
+
+    @PostMapping("/{boardId}/likes")
+    public ResponseEntity<ResponseDto<Void>> toggleBoardLike(@PathVariable Long boardId,
+                                                             @AuthenticationPrincipal PrincipalDetails principal) {
+        String traceId = RequestTraceIdFilter.getTraceId();
+        log.info("[게시글 좋아요 토글 작동 요청 API] TraceId={}", traceId);
+
+        String message = likeService.toggleBoardLike(boardId, principal.getMember().getMemberId());
+
+        return makeResponseEntity(traceId, HttpStatus.OK, null, message, null);
     }
 }
