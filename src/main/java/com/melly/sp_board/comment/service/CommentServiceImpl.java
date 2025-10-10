@@ -5,10 +5,7 @@ import com.melly.sp_board.board.domain.BoardStatus;
 import com.melly.sp_board.board.repository.BoardRepository;
 import com.melly.sp_board.comment.domain.Comment;
 import com.melly.sp_board.comment.domain.CommentStatus;
-import com.melly.sp_board.comment.dto.CommentFilter;
-import com.melly.sp_board.comment.dto.CommentListResponse;
-import com.melly.sp_board.comment.dto.CreateCommentRequest;
-import com.melly.sp_board.comment.dto.CreateCommentResponse;
+import com.melly.sp_board.comment.dto.*;
 import com.melly.sp_board.comment.repository.CommentRepository;
 import com.melly.sp_board.common.dto.PageResponseDto;
 import com.melly.sp_board.common.exception.CustomException;
@@ -103,7 +100,28 @@ public class CommentServiceImpl implements CommentService {
                 .empty(page.isEmpty())
                 .build();
     }
-    
+
+    @Override
+    @Transactional
+    public UpdateCommentResponse updateComment(Long commentId, UpdateCommentRequest dto, Long currentUserId) {
+        Comment comment = commentRepository.findByCommentIdAndStatusNot(commentId, CommentStatus.DELETED)
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 댓글은 존재하지 않습니다."));
+        Member currentUser = memberRepository.findById(currentUserId)
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 회원은 존재하지 않습니다."));
+
+        String oldContent = comment.getContent();
+
+        comment.updateComment(currentUser, dto);
+        commentRepository.flush();
+
+        return UpdateCommentResponse.builder()
+                .commentId(comment.getCommentId())
+                .oldContent(oldContent)
+                .newContent(comment.getContent())
+                .updatedAt(comment.getUpdatedAt())
+                .build();
+    }
+
     // 댓글 트리 구조 헬퍼 메서드
     private CommentListResponse buildTree(Comment parent, Long currentUserId, Map<Long, List<Comment>> childMap) {
         List<CommentListResponse> children = childMap.getOrDefault(parent.getCommentId(), List.of())

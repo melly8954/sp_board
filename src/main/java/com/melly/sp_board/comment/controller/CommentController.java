@@ -1,15 +1,11 @@
 package com.melly.sp_board.comment.controller;
 
 import com.melly.sp_board.auth.security.PrincipalDetails;
-import com.melly.sp_board.comment.dto.CommentFilter;
-import com.melly.sp_board.comment.dto.CommentListResponse;
-import com.melly.sp_board.comment.dto.CreateCommentRequest;
-import com.melly.sp_board.comment.dto.CreateCommentResponse;
+import com.melly.sp_board.comment.dto.*;
 import com.melly.sp_board.comment.service.CommentService;
 import com.melly.sp_board.common.controller.ResponseController;
 import com.melly.sp_board.common.dto.PageResponseDto;
 import com.melly.sp_board.common.dto.ResponseDto;
-import com.melly.sp_board.common.dto.SearchParamDto;
 import com.melly.sp_board.common.trace.RequestTraceIdFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,5 +41,17 @@ public class CommentController implements ResponseController {
         PageResponseDto<CommentListResponse> result = commentService.getCommentList(filter, principal.getMember().getMemberId());
 
         return makeResponseEntity(traceId, HttpStatus.OK, null, "댓글 목록 조회 성공", result);
+    }
+
+    @PatchMapping("/{commentId}")
+    public ResponseEntity<ResponseDto<UpdateCommentResponse>> updateComment(@PathVariable Long commentId,
+                                                                            @RequestBody UpdateCommentRequest dto,
+                                                                            @AuthenticationPrincipal PrincipalDetails principal) {
+        String traceId = RequestTraceIdFilter.getTraceId();
+        log.info("[댓글 수정 요청 API] TraceId={}", traceId);
+
+        UpdateCommentResponse result = commentService.updateComment(commentId, dto, principal.getMember().getMemberId());
+
+        return makeResponseEntity(traceId, HttpStatus.OK, null, "댓글 수정 성공", result);
     }
 }

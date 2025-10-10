@@ -1,7 +1,11 @@
 package com.melly.sp_board.comment.domain;
 
 import com.melly.sp_board.board.domain.Board;
+import com.melly.sp_board.board.domain.BoardStatus;
+import com.melly.sp_board.comment.dto.UpdateCommentRequest;
 import com.melly.sp_board.common.domain.BaseEntity;
+import com.melly.sp_board.common.exception.CustomException;
+import com.melly.sp_board.common.exception.ErrorType;
 import com.melly.sp_board.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -45,4 +49,11 @@ public class Comment extends BaseEntity {
 
     @Column(name="deleted_at")
     private LocalDateTime deletedAt;
+
+    public void updateComment(Member currentUser, UpdateCommentRequest dto) {
+        if((!this.getWriter().getMemberId().equals(currentUser.getMemberId())) && !currentUser.isAdmin() ) {
+            throw new CustomException(ErrorType.FORBIDDEN, "본인 게시글 또는 관리자가 아니면 수정할 수 없습니다.");
+        }
+        this.content = dto.getContent();
+    }
 }
