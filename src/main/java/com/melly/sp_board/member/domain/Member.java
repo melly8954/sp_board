@@ -33,4 +33,8 @@ public class Member extends BaseEntity {
 
     @Column(name="deleted_at")
     private LocalDateTime deletedAt;
+
+    public boolean isAdmin() {
+        return this.role == MemberRole.ADMIN;
+    }
 }

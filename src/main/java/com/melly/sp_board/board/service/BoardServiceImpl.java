@@ -261,4 +261,15 @@ public class BoardServiceImpl implements BoardService {
                 .updatedAt(board.getUpdatedAt())
                 .build();
     }
+
+    @Override
+    @Transactional
+    public void softDeleteBoard(Long boardId, Long currentUserId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 게시글은 존재하지 않습니다."));
+        Member currentUser = memberRepository.findById(currentUserId)
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 회원은 존재하지 않습니다."));
+
+        board.softDeleteBoard(currentUser);
+    }
 }

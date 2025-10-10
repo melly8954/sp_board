@@ -14,4 +14,6 @@ public interface BoardService {
     BoardResponse getBoard(Long boardId, Long currentUserId);
 
     UpdateBoardResponse updateBoard(Long boardId, UpdateBoardRequest dto, List<MultipartFile> newFiles, Long memberId);
+
+    void softDeleteBoard(Long boardId, Long currentUserId);
 }

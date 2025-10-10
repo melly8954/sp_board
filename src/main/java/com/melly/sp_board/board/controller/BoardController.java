@@ -69,4 +69,15 @@ public class BoardController implements ResponseController {
 
         return makeResponseEntity(traceId, HttpStatus.OK, null, "게시글 수정 성공", result);
     }
+
+    @DeleteMapping("/{boardId}")
+    public ResponseEntity<ResponseDto<Void>> softDeleteBoard(@PathVariable Long boardId,
+                                                             @AuthenticationPrincipal PrincipalDetails principal) {
+        String traceId = RequestTraceIdFilter.getTraceId();
+        log.info("[게시글 삭제 요청 API] TraceId={}", traceId);
+
+        boardService.softDeleteBoard(boardId, principal.getMember().getMemberId());
+
+        return makeResponseEntity(traceId, HttpStatus.OK, null, "게시글 삭제 성공", null);
+    }
 }
