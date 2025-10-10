@@ -193,7 +193,7 @@ public class BoardServiceImpl implements BoardService {
     @Override
     @Transactional
     public UpdateBoardResponse updateBoard(Long boardId, UpdateBoardRequest dto, List<MultipartFile> newFiles, Long memberId) {
-        Board board = boardRepository.findById(boardId)
+        Board board = boardRepository.findByBoardIdAndStatusNot(boardId, BoardStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 게시글은 존재하지 않습니다."));
         if(!board.getWriter().getMemberId().equals(memberId)) {
             throw new CustomException(ErrorType.FORBIDDEN, "본인 게시글이 아니면 수정할 수 없습니다.");
@@ -276,7 +276,7 @@ public class BoardServiceImpl implements BoardService {
     @Override
     @Transactional
     public void softDeleteBoard(Long boardId, Long currentUserId) {
-        Board board = boardRepository.findById(boardId)
+        Board board = boardRepository.findByBoardIdAndStatusNot(boardId, BoardStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 게시글은 존재하지 않습니다."));
         Member currentUser = memberRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 회원은 존재하지 않습니다."));
