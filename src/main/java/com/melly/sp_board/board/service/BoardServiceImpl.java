@@ -146,12 +146,16 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public BoardResponse getBoard(Long boardId, Long currentUserId) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 게시글은 존재하지 않습니다."));
 
         boolean isOwner = board.getWriter().getMemberId().equals(currentUserId);
+
+        if (!isOwner) {
+            board.increaseViewCount();
+        }
 
         String relatedType = "board_" + board.getBoardType().getName();
 

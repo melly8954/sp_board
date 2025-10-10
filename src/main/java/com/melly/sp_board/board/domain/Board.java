@@ -60,4 +60,12 @@ public class Board extends BaseEntity {
         this.status = BoardStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
     }
+
+    public void increaseViewCount() {
+        if (this.viewCount == null) {
+            this.viewCount = 1;
+        } else {
+            this.viewCount++;
+        }
+    }
 }
