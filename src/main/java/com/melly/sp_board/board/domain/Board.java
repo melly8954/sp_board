@@ -1,5 +1,6 @@
 package com.melly.sp_board.board.domain;
 
+import com.melly.sp_board.board.dto.UpdateBoardRequest;
 import com.melly.sp_board.common.domain.BaseEntity;
 import com.melly.sp_board.member.domain.Member;
 import jakarta.persistence.*;
@@ -40,4 +41,13 @@ public class Board extends BaseEntity {
 
     @Column(name="deleted_at")
     private LocalDateTime deletedAt;
+
+    public void updateBoard(UpdateBoardRequest dto) {
+        if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
+            this.title = dto.getTitle();
+        }
+        if (dto.getContent() != null && !dto.getContent().isBlank()) {
+            this.content = dto.getContent();
+        }
+    }
 }

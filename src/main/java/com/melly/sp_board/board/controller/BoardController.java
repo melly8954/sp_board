@@ -56,4 +56,17 @@ public class BoardController implements ResponseController {
 
         return makeResponseEntity(traceId, HttpStatus.OK, null, "게시글 상세 조회 성공", result);
     }
+
+    @PatchMapping("/{boardId}")
+    public ResponseEntity<ResponseDto<UpdateBoardResponse>> updateBoard(@PathVariable Long boardId,
+                                                                        @RequestPart(value = "data") UpdateBoardRequest dto,
+                                                                        @RequestPart(value = "files") List<MultipartFile> newFiles,
+                                                                        @AuthenticationPrincipal PrincipalDetails principal) {
+        String traceId = RequestTraceIdFilter.getTraceId();
+        log.info("[게시글 수정 요청 API] TraceId={}", traceId);
+
+        UpdateBoardResponse result = boardService.updateBoard(boardId, dto, newFiles, principal.getMember().getMemberId());
+
+        return makeResponseEntity(traceId, HttpStatus.OK, null, "게시글 수정 성공", result);
+    }
 }

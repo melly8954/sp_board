@@ -12,4 +12,6 @@ public interface BoardService {
     PageResponseDto<BoardListResponse> searchBoard(BoardFilter filter);
 
     BoardResponse getBoard(Long boardId, Long currentUserId);
+
+    UpdateBoardResponse updateBoard(Long boardId, UpdateBoardRequest dto, List<MultipartFile> newFiles, Long memberId);
 }
