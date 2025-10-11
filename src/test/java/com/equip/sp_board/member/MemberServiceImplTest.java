@@ -40,7 +40,7 @@ public class MemberServiceImplTest {
     @DisplayName("createMember() 단위 테스트")
     class createMember {
         @Test
-        @DisplayName("성공 - 회원 가입 (첨부파일 없음)")
+        @DisplayName("성공 - 회원 가입 (No_File)")
         void createMember_Success_NoFile() {
             // given
             CreateMemberRequest dto = CreateMemberRequest.builder()
@@ -69,7 +69,7 @@ public class MemberServiceImplTest {
         }
 
         @Test
-        @DisplayName("성공 - 회원 가입 (첨부파일 업로드)")
+        @DisplayName("성공 - 회원 가입 (With_File)")
         void createMember_Success_WithFile() throws IOException {
             // given
             CreateMemberRequest dto = CreateMemberRequest.builder()
