@@ -9,4 +9,6 @@ public interface CommentService {
     PageResponseDto<CommentListResponse> getCommentList(CommentFilter filter, Long currentUserId);
 
     UpdateCommentResponse updateComment(Long commentId, UpdateCommentRequest dto, Long currentUserId);
+
+    void softDeleteComment(Long commentId, Long currentUserId);
 }

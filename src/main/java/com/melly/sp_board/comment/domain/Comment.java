@@ -58,4 +58,12 @@ public class Comment extends BaseEntity {
             this.content = dto.getContent();
         }
     }
+
+    public void softDeleteComment(Member currentUser) {
+        if((!this.getWriter().getMemberId().equals(currentUser.getMemberId())) && !currentUser.isAdmin() ) {
+            throw new CustomException(ErrorType.FORBIDDEN, "본인 댓글 또는 관리자가 아니면 삭제할 수 없습니다.");
+        }
+        this.status = CommentStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+    }
 }

@@ -117,6 +117,17 @@ public class CommentServiceImpl implements CommentService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public void softDeleteComment(Long commentId, Long currentUserId) {
+        Comment comment = commentRepository.findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE)
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 댓글은 존재하지 않습니다."));
+        Member currentUser = memberRepository.findById(currentUserId)
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 회원은 존재하지 않습니다."));
+
+        comment.softDeleteComment(currentUser);
+    }
+
     // 댓글 트리 구조 헬퍼 메서드
     private CommentListResponse buildTree(Comment parent, Long currentUserId, Map<Long, List<Comment>> childMap) {
         List<CommentListResponse> children = childMap.getOrDefault(parent.getCommentId(), List.of())
