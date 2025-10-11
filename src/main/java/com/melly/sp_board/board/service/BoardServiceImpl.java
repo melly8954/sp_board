@@ -18,12 +18,14 @@ import com.melly.sp_board.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +35,9 @@ public class BoardServiceImpl implements BoardService {
     private final BoardTypeRepository boardTypeRepository;
     private final FileService fileService;
     private final FileRepository fileRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+
+    private static final String VIEW_KEY_PREFIX = "board:viewed:";
 
     @Override
     @Transactional
@@ -157,7 +162,7 @@ public class BoardServiceImpl implements BoardService {
 
         boolean isOwner = board.getWriter().getMemberId().equals(currentUserId);
 
-        if (!isOwner) {
+        if (!isOwner && isFirstView(boardId, currentUserId)) {
             board.increaseViewCount();
         }
 
@@ -283,5 +288,26 @@ public class BoardServiceImpl implements BoardService {
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 회원은 존재하지 않습니다."));
 
         board.softDeleteBoard(currentUser);
+    }
+
+    /**
+     * Redis를 이용해 중복 조회 여부 확인
+     * @return true → 처음 조회, false → 이미 조회한 사용자
+     */
+    private boolean isFirstView(Long boardId, Long currentUserId) {
+        String redisKey = VIEW_KEY_PREFIX + boardId;
+        String userKey = String.valueOf(currentUserId); // 문자열 저장
+
+        // Redis Set 사용자 ID 추가 (SADD)
+        Long added = redisTemplate.opsForSet().add(redisKey, userKey);
+
+        // TTL 부여 (key가 새로 생성된 경우에만)
+        Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
+        if (ttl != null && ttl == -1) {
+            redisTemplate.expire(redisKey, 24, TimeUnit.HOURS);
+        }
+
+        // added == 1이면 처음 본 사용자
+        return added != null && added == 1L;
     }
 }
