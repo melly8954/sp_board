@@ -66,4 +66,12 @@ public class Comment extends BaseEntity {
         this.status = CommentStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
     }
+
+    public void increaseLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decreaseLikeCount() {
+        this.likeCount--;
+    }
 }

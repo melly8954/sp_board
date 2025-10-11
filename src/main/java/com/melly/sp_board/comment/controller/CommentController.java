@@ -7,6 +7,7 @@ import com.melly.sp_board.common.controller.ResponseController;
 import com.melly.sp_board.common.dto.PageResponseDto;
 import com.melly.sp_board.common.dto.ResponseDto;
 import com.melly.sp_board.common.trace.RequestTraceIdFilter;
+import com.melly.sp_board.like.service.LikeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/comments")
 public class CommentController implements ResponseController {
     private final CommentService commentService;
+    private final LikeService likeService;
 
     @PostMapping("")
     public ResponseEntity<ResponseDto<CreateCommentResponse>> createComment(@RequestBody CreateCommentRequest dto,
@@ -57,12 +59,23 @@ public class CommentController implements ResponseController {
 
     @DeleteMapping("/{commentId}")
     public ResponseEntity<ResponseDto<Void>> softDeleteComment(@PathVariable Long commentId,
-                                                           @AuthenticationPrincipal PrincipalDetails principal) {
+                                                               @AuthenticationPrincipal PrincipalDetails principal) {
         String traceId = RequestTraceIdFilter.getTraceId();
         log.info("[댓글 삭제 요청 API] TraceId={}", traceId);
 
         commentService.softDeleteComment(commentId, principal.getMember().getMemberId());
 
         return makeResponseEntity(traceId, HttpStatus.OK, null, "댓글 삭제 성공", null);
+    }
+
+    @PostMapping("/{commentId}/likes")
+    public ResponseEntity<ResponseDto<Void>> toggleCommentLike(@PathVariable Long commentId,
+                                                               @AuthenticationPrincipal PrincipalDetails principal) {
+        String traceId = RequestTraceIdFilter.getTraceId();
+        log.info("[댓글 좋아요 토글 작동 요청 API] TraceId={}", traceId);
+
+        String message = likeService.toggleCommentLike(commentId, principal.getMember().getMemberId());
+
+        return makeResponseEntity(traceId, HttpStatus.OK, null, message, null);
     }
 }

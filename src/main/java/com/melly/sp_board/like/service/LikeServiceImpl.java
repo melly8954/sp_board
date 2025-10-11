@@ -3,6 +3,9 @@ package com.melly.sp_board.like.service;
 import com.melly.sp_board.board.domain.Board;
 import com.melly.sp_board.board.domain.BoardStatus;
 import com.melly.sp_board.board.repository.BoardRepository;
+import com.melly.sp_board.comment.domain.Comment;
+import com.melly.sp_board.comment.domain.CommentStatus;
+import com.melly.sp_board.comment.repository.CommentRepository;
 import com.melly.sp_board.common.exception.CustomException;
 import com.melly.sp_board.common.exception.ErrorType;
 import com.melly.sp_board.like.domain.Like;
@@ -21,6 +24,7 @@ import java.util.Optional;
 public class LikeServiceImpl implements LikeService {
     private final MemberRepository memberRepository;
     private final BoardRepository boardRepository;
+    private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
 
     @Override
@@ -57,7 +61,33 @@ public class LikeServiceImpl implements LikeService {
 
     @Override
     @Transactional
-    public void toggleCommentLike(Long commentId, Long memberId) {
+    public String toggleCommentLike(Long commentId, Long memberId) {
+        Comment comment = commentRepository.findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE)
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 댓글은 존재하지 않습니다."));
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 회원은 존재하지 않습니다."));
 
+        String relatedType = "comment";
+        Optional<Like> existing = likeRepository.findLike(relatedType, commentId, memberId);
+
+        String message = "";
+        if (existing.isPresent()) {
+            // 이미 좋아요 → 취소
+            likeRepository.delete(existing.get());
+            comment.decreaseLikeCount();
+            message = "좋아요 취소 성공";
+        } else {
+            // 좋아요 추가
+            Like like = Like.builder()
+                    .member(member)
+                    .relatedType(relatedType)
+                    .relatedId(commentId)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            likeRepository.save(like);
+            comment.increaseLikeCount();
+            message = "좋아요 등록 성공";
+        }
+        return message;
     }
 }
