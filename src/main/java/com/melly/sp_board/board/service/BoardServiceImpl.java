@@ -192,14 +192,11 @@ public class BoardServiceImpl implements BoardService {
 
     @Override
     @Transactional
-    public UpdateBoardResponse updateBoard(Long boardId, UpdateBoardRequest dto, List<MultipartFile> newFiles, Long memberId) {
+    public UpdateBoardResponse updateBoard(Long boardId, UpdateBoardRequest dto, List<MultipartFile> newFiles, Long currentUserId) {
         Board board = boardRepository.findByBoardIdAndStatus(boardId, BoardStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 게시글은 존재하지 않습니다."));
-        if(!board.getWriter().getMemberId().equals(memberId)) {
-            throw new CustomException(ErrorType.FORBIDDEN, "본인 게시글이 아니면 수정할 수 없습니다.");
-        }
 
-        board.updateBoard(dto);
+        board.updateBoard(dto, currentUserId);
 
         String relatedType = "board_" + board.getBoardType().getName();
 

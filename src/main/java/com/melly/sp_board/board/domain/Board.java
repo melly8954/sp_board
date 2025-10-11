@@ -44,7 +44,11 @@ public class Board extends BaseEntity {
     @Column(name="deleted_at")
     private LocalDateTime deletedAt;
 
-    public void updateBoard(UpdateBoardRequest dto) {
+    public void updateBoard(UpdateBoardRequest dto, Long currentUserId) {
+        if(!this.getWriter().getMemberId().equals(currentUserId)) {
+            throw new CustomException(ErrorType.FORBIDDEN, "본인 게시글이 아니면 수정할 수 없습니다.");
+        }
+
         if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
             this.title = dto.getTitle();
         }
