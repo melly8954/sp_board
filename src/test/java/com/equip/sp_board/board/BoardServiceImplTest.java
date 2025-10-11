@@ -1,11 +1,9 @@
 package com.equip.sp_board.board;
 
 import com.melly.sp_board.board.domain.Board;
+import com.melly.sp_board.board.domain.BoardStatus;
 import com.melly.sp_board.board.domain.BoardType;
-import com.melly.sp_board.board.dto.BoardFilter;
-import com.melly.sp_board.board.dto.BoardListResponse;
-import com.melly.sp_board.board.dto.CreateBoardRequest;
-import com.melly.sp_board.board.dto.CreateBoardResponse;
+import com.melly.sp_board.board.dto.*;
 import com.melly.sp_board.board.repository.BoardRepository;
 import com.melly.sp_board.board.repository.BoardTypeRepository;
 import com.melly.sp_board.board.service.BoardServiceImpl;
@@ -26,11 +24,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SetOperations;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mock.web.MockMultipartFile;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,6 +45,9 @@ public class BoardServiceImplTest {
     @Mock BoardTypeRepository boardTypeRepository;
     @Mock FileService fileService;
     @Mock FileRepository fileRepository;
+    @Mock RedisTemplate<String, Object> redisTemplate;
+    @Mock ValueOperations<String, Object> valueOperations;
+    @Mock SetOperations<String, Object> setOperations;
 
     @InjectMocks
     BoardServiceImpl boardService;
@@ -267,6 +271,124 @@ public class BoardServiceImplTest {
 
             verify(boardRepository, times(1))
                     .findBoardByFilters(pageable, filter.getBoardTypeId(), filter.getSearchType(), filter.getSearchKeyword());
+        }
+    }
+
+    @Nested
+    @DisplayName("getBoard() 테스트")
+    class GetBoard {
+        @Test
+        @DisplayName("성공 - 게시글 상세 조회 (첫 조회)")
+        void getBoard_FirstView_IncreasesViewCount() {
+            Long boardId = 1L;
+            Long userId = 100L;
+
+            Member writer = Member.builder().memberId(200L).build();
+            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+
+            Board board = Board.builder()
+                    .boardId(boardId)
+                    .boardType(boardType)
+                    .writer(writer)
+                    .viewCount(0)
+                    .build();
+
+            when(boardRepository.findByBoardIdAndStatus(boardId, BoardStatus.ACTIVE))
+                    .thenReturn(Optional.of(board));
+
+            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(setOperations.add(anyString(), any())).thenReturn(1L);
+            when(redisTemplate.getExpire(anyString(), eq(TimeUnit.SECONDS))).thenReturn(-1L);
+
+            when(fileRepository.findAllByRelatedTypeAndRelatedId(anyString(), eq(boardId)))
+                    .thenReturn(List.of());
+
+            BoardResponse result = boardService.getBoard(boardId, userId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getBoardId()).isEqualTo(1L);
+            assertThat(result.isOwner()).isFalse();
+            assertThat(result.getViewCount()).isEqualTo(1);
+
+            verify(setOperations).add(eq("board:viewed:" + boardId), eq(userId.toString()));
+            verify(redisTemplate).expire(anyString(), eq(24L), eq(TimeUnit.HOURS));
+        }
+
+        @Test
+        @DisplayName("성공 - 게시글 상세 조회 (중복 조회)")
+        void getBoard_AlreadyViewed_NoIncrease() {
+            Long boardId = 1L;
+            Long userId = 100L;
+
+            Member writer = Member.builder().memberId(200L).build();
+            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+
+            Board board = Board.builder()
+                    .boardId(boardId)
+                    .boardType(boardType)
+                    .writer(writer)
+                    .viewCount(1)
+                    .build();
+
+            when(boardRepository.findByBoardIdAndStatus(boardId, BoardStatus.ACTIVE))
+                    .thenReturn(Optional.of(board));
+            when(redisTemplate.opsForSet()).thenReturn(setOperations);
+            when(setOperations.add(anyString(), any())).thenReturn(1L);
+
+            when(fileRepository.findAllByRelatedTypeAndRelatedId(anyString(), eq(boardId)))
+                    .thenReturn(List.of());
+
+            BoardResponse result = boardService.getBoard(boardId, userId);
+
+            assertThat(result.isOwner()).isFalse();
+            assertThat(result.getViewCount()).isEqualTo(2);
+
+            verify(setOperations).add(eq("board:viewed:" + boardId), eq(userId.toString()));
+            verify(redisTemplate, never()).expire(anyString(), anyLong(), any());
+        }
+
+        @Test
+        @DisplayName("성공 - 게시글 상세 조회 (작성자 본인 게시글 조회)")
+        void getBoard_Owner_NoIncrease() {
+            Long boardId = 1L;
+            Long userId = 100L;
+
+            Member writer = Member.builder().memberId(100L).build();
+            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+
+            Board board = Board.builder()
+                    .boardId(boardId)
+                    .boardType(boardType)
+                    .writer(writer)
+                    .viewCount(1)
+                    .build();
+
+            when(boardRepository.findByBoardIdAndStatus(boardId, BoardStatus.ACTIVE))
+                    .thenReturn(Optional.of(board));
+            when(fileRepository.findAllByRelatedTypeAndRelatedId(anyString(), eq(boardId)))
+                    .thenReturn(List.of());
+
+            BoardResponse result = boardService.getBoard(boardId, userId);
+
+            assertThat(result.isOwner()).isTrue();
+            assertThat(result.getViewCount()).isEqualTo(1);
+
+            verify(redisTemplate, never()).opsForSet();
+        }
+
+        @Test
+        @DisplayName("예외 - 게시글 없음")
+        void getBoard_NotFound() {
+            Long boardId = 1L;
+            Long userId = 100L;
+
+            when(boardRepository.findByBoardIdAndStatus(boardId, BoardStatus.ACTIVE))
+                    .thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> boardService.getBoard(boardId, userId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorType")
+                    .isEqualTo(ErrorType.NOT_FOUND);
         }
     }
 }
