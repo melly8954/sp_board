@@ -9,9 +9,12 @@ import com.melly.sp_board.common.exception.CustomException;
 import com.melly.sp_board.common.exception.ErrorType;
 import com.melly.sp_board.common.util.CookieUtil;
 import com.melly.sp_board.member.domain.Member;
+import io.lettuce.core.RedisCommandTimeoutException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -75,6 +78,10 @@ public class AuthServiceImpl implements AuthService {
             throw new CustomException(ErrorType.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
         } catch (DisabledException e) {
             throw new CustomException(ErrorType.UNAUTHORIZED, "탈퇴 처리된 계정입니다.");
+        } catch (RedisConnectionFailureException | RedisCommandTimeoutException e) {
+            throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR, "Redis 연결 실패");
+        } catch (RedisSystemException e) {
+            throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR, "Redis 명령 실행 실패");
         }
     }
 }
