@@ -12,8 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 public class UpdateCommentResponse {
     private Long commentId;
-    private String oldContent;
-    private String newContent;
+    private String content;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 }

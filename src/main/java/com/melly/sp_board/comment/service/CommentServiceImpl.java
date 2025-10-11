@@ -106,18 +106,13 @@ public class CommentServiceImpl implements CommentService {
     public UpdateCommentResponse updateComment(Long commentId, UpdateCommentRequest dto, Long currentUserId) {
         Comment comment = commentRepository.findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 댓글은 존재하지 않습니다."));
-        Member currentUser = memberRepository.findById(currentUserId)
-                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 회원은 존재하지 않습니다."));
 
-        String oldContent = comment.getContent();
-
-        comment.updateComment(currentUser, dto);
+        comment.updateComment(dto, currentUserId);
         commentRepository.flush();
 
         return UpdateCommentResponse.builder()
                 .commentId(comment.getCommentId())
-                .oldContent(oldContent)
-                .newContent(comment.getContent())
+                .content(comment.getContent())
                 .updatedAt(comment.getUpdatedAt())
                 .build();
     }

@@ -50,10 +50,13 @@ public class Comment extends BaseEntity {
     @Column(name="deleted_at")
     private LocalDateTime deletedAt;
 
-    public void updateComment(Member currentUser, UpdateCommentRequest dto) {
-        if((!this.getWriter().getMemberId().equals(currentUser.getMemberId())) && !currentUser.isAdmin() ) {
+    public void updateComment(UpdateCommentRequest dto, Long currentUserId) {
+        if(!this.getWriter().getMemberId().equals(currentUserId)) {
             throw new CustomException(ErrorType.FORBIDDEN, "본인 게시글 또는 관리자가 아니면 수정할 수 없습니다.");
         }
-        this.content = dto.getContent();
+
+        if (dto.getContent() != null && !dto.getContent().isBlank()) {
+            this.content = dto.getContent();
+        }
     }
 }
