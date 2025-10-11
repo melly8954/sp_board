@@ -131,6 +131,7 @@ public class AuthServiceImplTest {
         @Test
         @DisplayName("성공 - 토큰 재발급")
         void testReissueTokenSuccess() {
+            // given
             when(cookieUtil.getValue(request)).thenReturn("mockRefreshToken");
             when(jwtProvider.getTokenType("mockRefreshToken")).thenReturn("RefreshToken");
             when(jwtProvider.isExpired("mockRefreshToken")).thenReturn(false);
@@ -174,8 +175,10 @@ public class AuthServiceImplTest {
         @Test
         @DisplayName("예외 - 쿠키에 RefreshToken 없음")
         void testReissueToken_NoToken() {
+            // given
             when(cookieUtil.getValue(request)).thenReturn(null);
 
+            // when & then
             assertThatThrownBy(() -> authServiceImpl.reissueToken(request, response))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorType")
@@ -185,9 +188,11 @@ public class AuthServiceImplTest {
         @Test
         @DisplayName("예외 - 잘못된 RefreshToken 타입")
         void testReissueToken_InvalidType() {
+            // given
             when(cookieUtil.getValue(request)).thenReturn("mockToken");
             when(jwtProvider.getTokenType("mockToken")).thenReturn("AccessToken");
 
+            // when & then
             assertThatThrownBy(() -> authServiceImpl.reissueToken(request, response))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorType")
@@ -197,10 +202,12 @@ public class AuthServiceImplTest {
         @Test
         @DisplayName("예외 - RefreshToken 만료")
         void testReissueToken_Expired() {
+            // given
             when(cookieUtil.getValue(request)).thenReturn("mockToken");
             when(jwtProvider.getTokenType("mockToken")).thenReturn("RefreshToken");
             when(jwtProvider.isExpired("mockToken")).thenReturn(true);
 
+            // when & then
             assertThatThrownBy(() -> authServiceImpl.reissueToken(request, response))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorType")
@@ -210,6 +217,7 @@ public class AuthServiceImplTest {
         @Test
         @DisplayName("예외 - Redis에 토큰 없음")
         void testReissueToken_RedisMissing() {
+            // given
             when(cookieUtil.getValue(request)).thenReturn("mockToken");
             when(jwtProvider.getTokenType("mockToken")).thenReturn("RefreshToken");
             when(jwtProvider.isExpired("mockToken")).thenReturn(false);
@@ -219,6 +227,7 @@ public class AuthServiceImplTest {
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);
             when(valueOperations.get("RefreshToken:testuser:tokenId")).thenReturn(null);
 
+            // when & then
             assertThatThrownBy(() -> authServiceImpl.reissueToken(request, response))
                     .isInstanceOf(CustomException.class)
                     .extracting("errorType")
@@ -232,6 +241,7 @@ public class AuthServiceImplTest {
         @Test
         @DisplayName("성공 - 로그아웃 성공")
         void logout_success() {
+            // given
             String accessToken = "AccessToken";
             String refreshToken = "RefreshToken";
 
@@ -254,9 +264,10 @@ public class AuthServiceImplTest {
             // Response cookie mock
             doNothing().when(response).addCookie(any(Cookie.class));
 
+            // when
             authServiceImpl.logout(request, response);
 
-            // 검증
+            // then
             verify(valueOperations).set(
                     eq("BLACKLIST_" + accessToken),
                     eq("logout"),
