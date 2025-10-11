@@ -2,10 +2,12 @@ package com.melly.sp_board.auth.controller;
 
 import com.melly.sp_board.auth.dto.LoginRequest;
 import com.melly.sp_board.auth.dto.LoginResponse;
+import com.melly.sp_board.auth.dto.ReIssueTokenDto;
 import com.melly.sp_board.auth.service.AuthService;
 import com.melly.sp_board.common.controller.ResponseController;
 import com.melly.sp_board.common.dto.ResponseDto;
 import com.melly.sp_board.common.trace.RequestTraceIdFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,5 +32,14 @@ public class AuthController implements ResponseController {
 
         LoginResponse result = authService.login(dto,response);
         return makeResponseEntity(traceId, HttpStatus.OK, null, "로그인 성공", result);
+    }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<ResponseDto<ReIssueTokenDto>> reissueToken(HttpServletRequest request, HttpServletResponse response){
+        String traceId = RequestTraceIdFilter.getTraceId();
+        log.info("[토큰 재발급 요청 API] TraceId={}", traceId);
+
+        ReIssueTokenDto result = authService.reissueToken(request, response);
+        return makeResponseEntity(traceId, HttpStatus.OK, "null","토큰 재발급 성공", result);
     }
 }

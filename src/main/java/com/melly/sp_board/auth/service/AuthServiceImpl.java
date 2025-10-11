@@ -1,7 +1,9 @@
 package com.melly.sp_board.auth.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.melly.sp_board.auth.dto.LoginRequest;
 import com.melly.sp_board.auth.dto.LoginResponse;
+import com.melly.sp_board.auth.dto.ReIssueTokenDto;
 import com.melly.sp_board.auth.dto.RefreshTokenDto;
 import com.melly.sp_board.auth.jwt.JwtProvider;
 import com.melly.sp_board.auth.security.PrincipalDetails;
@@ -11,6 +13,7 @@ import com.melly.sp_board.common.util.CookieUtil;
 import com.melly.sp_board.member.domain.Member;
 import io.lettuce.core.RedisCommandTimeoutException;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.RedisConnectionFailureException;
@@ -35,6 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtProvider jwtProvider;
     private final CookieUtil cookieUtil;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -78,10 +82,71 @@ public class AuthServiceImpl implements AuthService {
             throw new CustomException(ErrorType.UNAUTHORIZED, "비밀번호가 일치하지 않습니다.");
         } catch (DisabledException e) {
             throw new CustomException(ErrorType.UNAUTHORIZED, "탈퇴 처리된 계정입니다.");
-        } catch (RedisConnectionFailureException | RedisCommandTimeoutException e) {
-            throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR, "Redis 연결 실패");
-        } catch (RedisSystemException e) {
-            throw new CustomException(ErrorType.INTERNAL_SERVER_ERROR, "Redis 명령 실행 실패");
         }
+    }
+
+    @Override
+    @Transactional
+    public ReIssueTokenDto reissueToken(HttpServletRequest request, HttpServletResponse response) {
+        // 쿠키에서 refresh 토큰 추출
+        String refreshToken = cookieUtil.getValue(request);
+        if (refreshToken == null) {
+            throw new CustomException(ErrorType.NOT_FOUND, "Refresh Token 이 요청에 존재하지 않습니다.");
+        }
+
+        // 카테고리 확인
+        if (!"RefreshToken".equals(jwtProvider.getTokenType(refreshToken))) {
+            throw new CustomException(ErrorType.UNAUTHORIZED, "유효하지 않은 Refresh Token 입니다.");
+        }
+
+        // 토큰 만료 확인
+        if (jwtProvider.isExpired(refreshToken)) {
+            throw new CustomException(ErrorType.UNAUTHORIZED, "만료된 Refresh Token 입니다.");
+        }
+
+        String username = jwtProvider.getUsername(refreshToken);
+        String tokenId = jwtProvider.getTokenId(refreshToken);
+
+        String key = "RefreshToken:" + username + ":" + tokenId;
+        Object redisValue = redisTemplate.opsForValue().get(key);
+
+        if (redisValue == null) {
+            throw new CustomException(ErrorType.NOT_FOUND, "Refresh Token이 Redis에 존재하지 않습니다.");
+        }
+
+        // Object -> DTO 변환
+        RefreshTokenDto refreshTokenDto = objectMapper.convertValue(redisValue, RefreshTokenDto.class);
+
+        // 새로운 tokenId 생성
+        String newTokenId = UUID.randomUUID().toString();
+
+        // 새로운 accessToken, refreshToken 생성
+        String newAccessToken = jwtProvider.createJwt(newTokenId, "AccessToken", username, refreshTokenDto.getRole(),600000L);
+        String newRefreshToken = jwtProvider.createJwt(newTokenId,"RefreshToken", username, refreshTokenDto.getRole(), 86400000L);
+
+        // Redis에 새로운 refreshToken 저장
+        RefreshTokenDto newRefreshTokenDto = RefreshTokenDto.builder()
+                .username(username)
+                .role(refreshTokenDto.getRole())
+                .tokenId(newTokenId)
+                .issuedAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plus(Duration.ofMillis(86400000L)))
+                .build();
+        redisTemplate.opsForValue().set("RefreshToken:" + username + ":" + newTokenId, newRefreshTokenDto, Duration.ofDays(1));
+
+        // 기존 refresh token 삭제
+        redisTemplate.delete(key);
+
+        // 쿠키에 새로운 refreshToken 저장
+        Cookie refreshCookie = cookieUtil.createCookie("RefreshToken", newRefreshToken);
+        response.addCookie(refreshCookie);
+
+        return new ReIssueTokenDto(newAccessToken, newRefreshToken);
+    }
+
+    @Override
+    @Transactional
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+
     }
 }
