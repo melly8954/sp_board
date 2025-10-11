@@ -4,7 +4,6 @@ import com.melly.sp_board.common.dto.SearchParamDto;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -12,4 +11,6 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class BoardFilter extends SearchParamDto {
     private Long boardTypeId;
+    private String searchType;
+    private String searchKeyword;
 }

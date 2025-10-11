@@ -118,7 +118,11 @@ public class BoardServiceImpl implements BoardService {
     public PageResponseDto<BoardListResponse> searchBoard(BoardFilter filter) {
         Pageable pageable = filter.getPageable();
 
-        Page<Board> page = boardRepository.findBoardByFilters(pageable, filter.getBoardTypeId());
+        Page<Board> page = boardRepository.findBoardByFilters(
+                pageable,
+                filter.getBoardTypeId(),
+                filter.getSearchType(),
+                filter.getSearchKeyword());
 
         List<BoardListResponse> content =page.getContent().stream()
                 .map(b -> BoardListResponse.builder()
