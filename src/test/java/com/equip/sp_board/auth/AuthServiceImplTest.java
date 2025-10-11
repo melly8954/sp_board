@@ -23,7 +23,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,7 +31,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -224,6 +223,48 @@ public class AuthServiceImplTest {
                     .isInstanceOf(CustomException.class)
                     .extracting("errorType")
                     .isEqualTo(ErrorType.NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("logout() 메서드 테스트")
+    class logout {
+        @Test
+        @DisplayName("성공 - 로그아웃 성공")
+        void logout_success() {
+            String accessToken = "AccessToken";
+            String refreshToken = "RefreshToken";
+
+            // Header mock
+            when(request.getHeader("Authorization")).thenReturn("Bearer " + accessToken);
+
+            // Redis TTL mock
+            when(jwtProvider.getExpiration(accessToken)).thenReturn(1000L); // 1초
+
+            // Refresh token mock
+            when(cookieUtil.getValue(request)).thenReturn(refreshToken);
+            when(jwtProvider.getUsername(refreshToken)).thenReturn("testuser");
+            when(jwtProvider.getTokenId(refreshToken)).thenReturn("tokenId");
+
+            // Redis mock
+            when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+            doNothing().when(valueOperations).set(anyString(), anyString(), anyLong(), any(TimeUnit.class));
+            when(redisTemplate.delete(anyString())).thenReturn(true);
+
+            // Response cookie mock
+            doNothing().when(response).addCookie(any(Cookie.class));
+
+            authServiceImpl.logout(request, response);
+
+            // 검증
+            verify(valueOperations).set(
+                    eq("BLACKLIST_" + accessToken),
+                    eq("logout"),
+                    eq(1000L),
+                    eq(TimeUnit.MILLISECONDS)
+            );
+            verify(redisTemplate).delete("RefreshToken:testuser:tokenId");
+            verify(response).addCookie(any(Cookie.class));
         }
     }
 }
