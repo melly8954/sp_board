@@ -4,6 +4,11 @@ spring:
     url: jdbc:p6spy:mysql://localhost:${MYSQL_LOCAL_PORT}/${DB_NAME}?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: localhost
+      port: ${REDIS_LOCAL_PORT}  # 환경변수 없으면 기본 6379
+      database: 0
 
 file:
   access-url-base: http://localhost:8080/files/

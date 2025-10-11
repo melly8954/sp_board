@@ -10,7 +10,8 @@ import lombok.Getter;
 public class LoginResponse {
     private Long memberId;
     private String username;
+    private String role;
     private String tokenId;
     private String accessToken;
-    private String role;
+    private String refreshToken;
 }
