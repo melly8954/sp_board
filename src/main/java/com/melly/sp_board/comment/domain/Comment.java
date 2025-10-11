@@ -1,7 +1,6 @@
 package com.melly.sp_board.comment.domain;
 
 import com.melly.sp_board.board.domain.Board;
-import com.melly.sp_board.board.domain.BoardStatus;
 import com.melly.sp_board.comment.dto.UpdateCommentRequest;
 import com.melly.sp_board.common.domain.BaseEntity;
 import com.melly.sp_board.common.exception.CustomException;
