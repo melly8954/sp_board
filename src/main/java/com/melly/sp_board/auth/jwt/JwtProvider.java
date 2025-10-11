@@ -1,5 +1,8 @@
 package com.melly.sp_board.auth.jwt;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -56,5 +59,24 @@ public class JwtProvider {
 
     public String getRole(String token) {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role", String.class);
+    }
+    
+    // 토큰 만료 시간 구하기
+    public long getExpiration(String token) {
+        try {
+            // 토큰 검증 + 파싱
+            Jwt<?, Claims> jwt = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
+
+            Claims claims = jwt.getPayload();
+            Date exp = claims.getExpiration(); // "exp"를 Date로 가져옴
+            return exp.getTime() - System.currentTimeMillis();
+
+        } catch (ExpiredJwtException e) {
+            // 이미 만료된 경우, 남은 시간은 0
+            return 0;
+        }
     }
 }

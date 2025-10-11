@@ -8,6 +8,7 @@ import com.melly.sp_board.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -28,6 +29,7 @@ public class SecurityConfig {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final RequestTraceIdFilter requestTraceIdFilter;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,7 +45,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/reissue").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(requestTraceIdFilter, UsernamePasswordAuthenticationFilter.class) // Trace ID 먼저
-                .addFilterBefore(new JwtFilter(jwtProvider, memberRepository), UsernamePasswordAuthenticationFilter.class); // JWT 인증
+                .addFilterBefore(new JwtFilter(jwtProvider, memberRepository, redisTemplate), UsernamePasswordAuthenticationFilter.class); // JWT 인증
         return http.build();
     }
 

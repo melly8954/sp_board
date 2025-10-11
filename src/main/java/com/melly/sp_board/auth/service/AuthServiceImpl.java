@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -147,6 +148,37 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void logout(HttpServletRequest request, HttpServletResponse response) {
+        String accessToken = request.getHeader("Authorization");
+        if (accessToken != null && accessToken.startsWith("Bearer ")) {
+            accessToken = accessToken.substring(7); // "Bearer " 제거
+        }
 
+        // 토큰에서 남은 만료 시간 계산
+        long expiration = jwtProvider.getExpiration(accessToken);
+
+        // Redis 블랙리스트에 저장 (TTL 설정)
+        if (expiration > 0) {
+            redisTemplate.opsForValue().set(
+                    "BLACKLIST_" + accessToken,
+                    "logout",
+                    expiration,
+                    TimeUnit.MILLISECONDS
+            );
+        }
+
+        String refreshToken = cookieUtil.getValue(request);
+        String username = jwtProvider.getUsername(refreshToken);
+        String tokenId = jwtProvider.getTokenId(refreshToken);
+
+        String key = "RefreshToken:" + username + ":" + tokenId;
+
+        redisTemplate.delete(key);
+
+        // 쿠키에서 refresh token 제거
+        Cookie refreshCookie = new Cookie("RefreshToken", null);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(0); // 바로 만료
+        response.addCookie(refreshCookie);
     }
 }
