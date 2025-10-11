@@ -2,11 +2,14 @@ package com.equip.sp_board.board;
 
 import com.melly.sp_board.board.domain.Board;
 import com.melly.sp_board.board.domain.BoardType;
+import com.melly.sp_board.board.dto.BoardFilter;
+import com.melly.sp_board.board.dto.BoardListResponse;
 import com.melly.sp_board.board.dto.CreateBoardRequest;
 import com.melly.sp_board.board.dto.CreateBoardResponse;
 import com.melly.sp_board.board.repository.BoardRepository;
 import com.melly.sp_board.board.repository.BoardTypeRepository;
 import com.melly.sp_board.board.service.BoardServiceImpl;
+import com.melly.sp_board.common.dto.PageResponseDto;
 import com.melly.sp_board.common.exception.CustomException;
 import com.melly.sp_board.common.exception.ErrorType;
 import com.melly.sp_board.filestorage.repository.FileRepository;
@@ -20,8 +23,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -154,6 +161,112 @@ public class BoardServiceImplTest {
                     .isEqualTo(ErrorType.NOT_FOUND);
 
             verify(boardRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("searchBoard() 단위 테스트")
+    class searchBoard {
+        @Test
+        @DisplayName("성공 - 게시글 목록 조회")
+        void searchBoard_Success() {
+            // given
+            BoardFilter filter = BoardFilter.builder()
+                    .boardTypeId(1L)
+                    .searchKeyword("테스트")
+                    .searchType("title")
+                    .page(1)
+                    .size(10)
+                    .build();
+
+            Pageable pageable = filter.getPageable();
+
+            Member writer = Member.builder()
+                    .name("작성자")
+                    .build();
+
+            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+
+            Board board1 = Board.builder()
+                    .boardId(1L)
+                    .boardType(boardType)
+                    .writer(writer)
+                    .title("테스트 게시글1")
+                    .viewCount(1)
+                    .likeCount(1)
+                    .build();
+
+            Board board2 = Board.builder()
+                    .boardId(2L)
+                    .boardType(boardType)
+                    .writer(writer)
+                    .title("테스트 게시글2")
+                    .viewCount(2)
+                    .likeCount(2)
+                    .build();
+
+            List<Board> boards = List.of(board1, board2);
+            Page<Board> page = new PageImpl<>(boards, pageable, boards.size());
+
+            when(boardRepository.findBoardByFilters(
+                    eq(pageable),
+                    eq(filter.getBoardTypeId()),
+                    eq(filter.getSearchType()),
+                    eq(filter.getSearchKeyword())
+            )).thenReturn(page);
+
+            // when
+            PageResponseDto<BoardListResponse> result = boardService.searchBoard(filter);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).hasSize(2);
+            assertThat(result.getTotalElements()).isEqualTo(2);
+            assertThat(result.getTotalPages()).isEqualTo(1);
+            assertThat(result.isFirst()).isTrue();
+            assertThat(result.isLast()).isTrue();
+            assertThat(result.isEmpty()).isFalse();
+
+            verify(boardRepository, times(1))
+                    .findBoardByFilters(pageable, filter.getBoardTypeId(), filter.getSearchType(), filter.getSearchKeyword());
+        }
+
+        @Test
+        @DisplayName("성공 - 게시글 목록 조회 (빈 페이지)")
+        void searchBoard_Success_Empty() {
+            // given
+            BoardFilter filter = BoardFilter.builder()
+                    .boardTypeId(1L)
+                    .page(1)
+                    .size(10)
+                    .build();
+
+            Pageable pageable = filter.getPageable();
+
+            // 빈 리스트로 페이지 생성
+            Page<Board> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+
+            when(boardRepository.findBoardByFilters(
+                    eq(pageable),
+                    eq(filter.getBoardTypeId()),
+                    eq(filter.getSearchType()),
+                    eq(filter.getSearchKeyword())
+            )).thenReturn(emptyPage);
+
+            // when
+            PageResponseDto<BoardListResponse> result = boardService.searchBoard(filter);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.getContent()).isEmpty();
+            assertThat(result.getTotalElements()).isEqualTo(0);
+            assertThat(result.getTotalPages()).isEqualTo(0);
+            assertThat(result.isFirst()).isTrue();
+            assertThat(result.isLast()).isTrue();
+            assertThat(result.isEmpty()).isTrue();
+
+            verify(boardRepository, times(1))
+                    .findBoardByFilters(pageable, filter.getBoardTypeId(), filter.getSearchType(), filter.getSearchKeyword());
         }
     }
 }
