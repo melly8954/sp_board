@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
-    Optional<Comment> findByCommentIdAndStatusNot(Long parentCommentId, CommentStatus commentStatus);
+    Optional<Comment> findByCommentIdAndStatus(Long parentCommentId, CommentStatus commentStatus);
 
     @Query("""
         SELECT c

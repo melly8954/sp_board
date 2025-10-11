@@ -34,13 +34,13 @@ public class CommentServiceImpl implements CommentService {
     public CreateCommentResponse createComment(CreateCommentRequest dto, Long currentUserId) {
         Member writer = memberRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 사용자는 존재하지 않습니다."));
-        Board board = boardRepository.findByBoardIdAndStatusNot(dto.getBoardId(), BoardStatus.DELETED)
+        Board board = boardRepository.findByBoardIdAndStatus(dto.getBoardId(), BoardStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 게시글은 존재하지 않습니다."));
 
         // parentCommentId가 있으면 찾아오기
         Comment parent = null;
         if (dto.getParentCommentId() != null) {
-            parent = commentRepository.findByCommentIdAndStatusNot(dto.getParentCommentId(), CommentStatus.DELETED)
+            parent = commentRepository.findByCommentIdAndStatus(dto.getParentCommentId(), CommentStatus.ACTIVE)
                     .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 댓글은 존재하지 않습니다."));
         }
 
@@ -104,7 +104,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public UpdateCommentResponse updateComment(Long commentId, UpdateCommentRequest dto, Long currentUserId) {
-        Comment comment = commentRepository.findByCommentIdAndStatusNot(commentId, CommentStatus.DELETED)
+        Comment comment = commentRepository.findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 댓글은 존재하지 않습니다."));
         Member currentUser = memberRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 회원은 존재하지 않습니다."));

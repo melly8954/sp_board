@@ -28,7 +28,7 @@ public class LikeServiceImpl implements LikeService {
     public String toggleBoardLike(Long boardId, Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 사용자는 존재하지 않습니다."));
-        Board board = boardRepository.findByBoardIdAndStatusNot(boardId, BoardStatus.DELETED)
+        Board board = boardRepository.findByBoardIdAndStatus(boardId, BoardStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 게시글은 존재하지 않습니다."));
 
         String relatedType = "board";

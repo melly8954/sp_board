@@ -19,6 +19,6 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
     """)
     Page<Board> findBoardByFilters(Pageable pageable, @Param("boardTypeId") Long boardTypeId);
 
-    // WHERE Board.boardId = ? AND Board.status != ?
-    Optional<Board> findByBoardIdAndStatusNot(Long boardId, BoardStatus boardStatus);
+    // WHERE Board.boardId = ? AND Board.status = ?
+    Optional<Board> findByBoardIdAndStatus(Long boardId, BoardStatus boardStatus);
 }
