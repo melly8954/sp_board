@@ -203,4 +203,67 @@ public class CommentServiceImplTest {
             verify(commentRepository, never()).flush();
         }
     }
+
+    @Nested
+    @DisplayName("softDeleteComment() 메서드 테스트")
+    class softDeleteComment {
+        @Test
+        @DisplayName("성공 - 댓글 삭제 (soft delete)")
+        void softDeleteComment_Success() {
+            Long commentId = 100L;
+            Long currentUserId = 1L;
+
+            Comment comment = mock(Comment.class);
+            Member currentUser = mock(Member.class);
+
+            when(commentRepository.findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE))
+                    .thenReturn(Optional.of(comment));
+            when(memberRepository.findById(currentUserId)).thenReturn(Optional.of(currentUser));
+
+            commentServiceImpl.softDeleteComment(commentId, currentUserId);
+
+            verify(commentRepository).findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE);
+            verify(memberRepository).findById(currentUserId);
+            verify(comment).softDeleteComment(currentUser);
+        }
+
+        @Test
+        @DisplayName("예외 - 댓글 삭제 시 댓글 없음")
+        void softDeleteComment_Fail_NoComment() {
+            Long commentId = 100L;
+            Long currentUserId = 1L;
+
+            when(commentRepository.findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE))
+                    .thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> commentServiceImpl.softDeleteComment(commentId, currentUserId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorType")
+                    .isEqualTo(ErrorType.NOT_FOUND);
+
+            verify(commentRepository).findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE);
+            verify(memberRepository, never()).findById(anyLong());
+        }
+
+        @Test
+        @DisplayName("예외 - 댓글 삭제 시 회원 없음")
+        void softDeleteComment_Fail_NoMember() {
+            Long commentId = 100L;
+            Long currentUserId = 1L;
+
+            Comment comment = mock(Comment.class);
+            when(commentRepository.findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE))
+                    .thenReturn(Optional.of(comment));
+            when(memberRepository.findById(currentUserId)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> commentServiceImpl.softDeleteComment(commentId, currentUserId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorType")
+                    .isEqualTo(ErrorType.NOT_FOUND);
+
+            verify(commentRepository).findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE);
+            verify(memberRepository).findById(currentUserId);
+            verify(comment, never()).softDeleteComment(any());
+        }
+    }
 }
