@@ -6,6 +6,8 @@ import com.melly.sp_board.board.repository.BoardRepository;
 import com.melly.sp_board.comment.domain.Comment;
 import com.melly.sp_board.comment.domain.CommentStatus;
 import com.melly.sp_board.comment.dto.CreateCommentRequest;
+import com.melly.sp_board.comment.dto.UpdateCommentRequest;
+import com.melly.sp_board.comment.dto.UpdateCommentResponse;
 import com.melly.sp_board.comment.repository.CommentRepository;
 import com.melly.sp_board.comment.service.CommentServiceImpl;
 import com.melly.sp_board.common.exception.CustomException;
@@ -151,6 +153,54 @@ public class CommentServiceImplTest {
             verify(memberRepository).findById(memberId);
             verify(boardRepository).findByBoardIdAndStatus(boardId, BoardStatus.ACTIVE);
             verify(commentRepository, never()).save(any(Comment.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("updateComment() 메서드 테스트")
+    class updateComment {
+        @Test
+        @DisplayName("성공 - 댓글 수정")
+        void updateComment_Success() {
+            // given
+            Long commentId = 100L;
+            Long currentUserId = 1L;
+
+            Comment comment = mock(Comment.class);
+            UpdateCommentRequest dto = UpdateCommentRequest.builder()
+                    .content("수정된 댓글 내용")
+                    .build();
+
+            when(commentRepository.findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE))
+                    .thenReturn(Optional.of(comment));
+
+            // when
+            commentServiceImpl.updateComment(commentId, dto, currentUserId);
+
+            // then
+            verify(commentRepository).findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE);
+            verify(comment).updateComment(dto, currentUserId);
+            verify(commentRepository).flush();
+        }
+
+        @Test
+        @DisplayName("예외 - 댓글이 존재하지 않는 경우")
+        void updateComment_Fail_NotFound() {
+            // given
+            Long commentId = 100L;
+            Long currentUserId = 1L;
+            UpdateCommentRequest dto = UpdateCommentRequest.builder().content("내용").build();
+
+            when(commentRepository.findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE))
+                    .thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> commentServiceImpl.updateComment(commentId, dto, currentUserId))
+                    .isInstanceOf(CustomException.class)
+                    .extracting("errorType")
+                    .isEqualTo(ErrorType.NOT_FOUND);
+
+            verify(commentRepository, never()).flush();
         }
     }
 }
