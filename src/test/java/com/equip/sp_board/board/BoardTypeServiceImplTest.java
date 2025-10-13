@@ -30,8 +30,8 @@ class BoardTypeServiceImplTest {
     @DisplayName("getBoardTypes() - 정상 조회")
     void testGetBoardTypes() {
         // given
-        BoardType boardType1 = new BoardType(1L, "공지", "공지 게시판 전용 타입");
-        BoardType boardType2 = new BoardType(2L, "자유", "자유 게시판 전용 타입");
+        BoardType boardType1 = new BoardType(1L, "notice", "공지", "공지 게시판 전용 타입");
+        BoardType boardType2 = new BoardType(2L, "free", "자유", "자유 게시판 전용 타입");
 
         when(boardTypeRepository.findAll()).thenReturn(List.of(boardType1, boardType2));
 

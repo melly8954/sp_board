@@ -125,7 +125,7 @@ public class BoardServiceImpl implements BoardService {
 
         Page<Board> page = boardRepository.findBoardByFilters(
                 pageable,
-                filter.getBoardTypeId(),
+                filter.getBoardTypeCode(),
                 filter.getSearchType(),
                 filter.getSearchKeyword());
 

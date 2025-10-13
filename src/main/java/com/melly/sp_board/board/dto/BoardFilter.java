@@ -10,7 +10,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 public class BoardFilter extends SearchParamDto {
-    private Long boardTypeId;
+    private String boardTypeCode;
     private String searchType;
     private String searchKeyword;
 }

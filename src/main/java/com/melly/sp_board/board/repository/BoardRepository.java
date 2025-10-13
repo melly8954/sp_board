@@ -15,7 +15,7 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
         SELECT b
         FROM Board b
         WHERE  b.status = 'ACTIVE'
-            AND (:boardTypeId IS NULL OR b.boardType.boardTypeId = :boardTypeId)
+            AND (:boardTypeCode IS NULL OR b.boardType.code = :boardTypeCode)
             AND (
               :searchType IS NULL
               OR :searchType = ''
@@ -29,7 +29,7 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
             )
     """)
     Page<Board> findBoardByFilters(Pageable pageable,
-                                   @Param("boardTypeId") Long boardTypeId,
+                                   @Param("boardTypeCode") String boardTypeCode,
                                    @Param("searchType") String searchType,
                                    @Param("searchKeyword") String searchKeyword);
 

@@ -68,7 +68,7 @@ public class BoardServiceImplTest {
                     .build();
 
             Member member = new Member();
-            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용 타입");
+            BoardType boardType = new BoardType(1L, "notice", "공지", "공지 게시판 전용 타입");
 
             when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
             when(boardTypeRepository.findById(dto.getBoardTypeId())).thenReturn(Optional.of(boardType));
@@ -96,7 +96,7 @@ public class BoardServiceImplTest {
                     .build();
 
             Member member = new Member();
-            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용 타입");
+            BoardType boardType = new BoardType(1L, "notice", "공지", "공지 게시판 전용 타입");
 
             MockMultipartFile file = new MockMultipartFile(
                     "file",
@@ -192,7 +192,7 @@ public class BoardServiceImplTest {
                     .name("작성자")
                     .build();
 
-            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+            BoardType boardType = new BoardType(1L, "notice", "공지", "공지 게시판 전용");
 
             Board board1 = Board.builder()
                     .boardId(1L)
@@ -217,7 +217,7 @@ public class BoardServiceImplTest {
 
             when(boardRepository.findBoardByFilters(
                     eq(pageable),
-                    eq(filter.getBoardTypeId()),
+                    eq(filter.getBoardTypeCode()),
                     eq(filter.getSearchType()),
                     eq(filter.getSearchKeyword())
             )).thenReturn(page);
@@ -235,7 +235,7 @@ public class BoardServiceImplTest {
             assertThat(result.isEmpty()).isFalse();
 
             verify(boardRepository, times(1))
-                    .findBoardByFilters(pageable, filter.getBoardTypeId(), filter.getSearchType(), filter.getSearchKeyword());
+                    .findBoardByFilters(pageable, filter.getBoardTypeCode(), filter.getSearchType(), filter.getSearchKeyword());
         }
 
         @Test
@@ -255,7 +255,7 @@ public class BoardServiceImplTest {
 
             when(boardRepository.findBoardByFilters(
                     eq(pageable),
-                    eq(filter.getBoardTypeId()),
+                    eq(filter.getBoardTypeCode()),
                     eq(filter.getSearchType()),
                     eq(filter.getSearchKeyword())
             )).thenReturn(emptyPage);
@@ -273,7 +273,7 @@ public class BoardServiceImplTest {
             assertThat(result.isEmpty()).isTrue();
 
             verify(boardRepository, times(1))
-                    .findBoardByFilters(pageable, filter.getBoardTypeId(), filter.getSearchType(), filter.getSearchKeyword());
+                    .findBoardByFilters(pageable, filter.getBoardTypeCode(), filter.getSearchType(), filter.getSearchKeyword());
         }
     }
 
@@ -288,7 +288,7 @@ public class BoardServiceImplTest {
             Long userId = 100L;
 
             Member writer = Member.builder().memberId(200L).build();
-            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+            BoardType boardType = new BoardType(1L, "notice", "공지", "공지 게시판 전용");
 
             Board board = Board.builder()
                     .boardId(boardId)
@@ -328,7 +328,7 @@ public class BoardServiceImplTest {
             Long userId = 100L;
 
             Member writer = Member.builder().memberId(200L).build();
-            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+            BoardType boardType = new BoardType(1L, "notice", "공지", "공지 게시판 전용");
 
             Board board = Board.builder()
                     .boardId(boardId)
@@ -363,7 +363,7 @@ public class BoardServiceImplTest {
             Long userId = 100L;
 
             Member writer = Member.builder().memberId(100L).build();
-            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+            BoardType boardType = new BoardType(1L, "notice", "공지", "공지 게시판 전용");
 
             Board board = Board.builder()
                     .boardId(boardId)
@@ -415,7 +415,7 @@ public class BoardServiceImplTest {
             Long currentUserId = 100L;
 
             Member writer = Member.builder().memberId(100L).build();
-            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+            BoardType boardType = new BoardType(1L, "notice", "공지", "공지 게시판 전용");
 
             Board board = Board.builder()
                     .boardId(boardId)
@@ -456,7 +456,7 @@ public class BoardServiceImplTest {
             Long userId = 100L;
 
             Member writer = Member.builder().memberId(100L).build();
-            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+            BoardType boardType = new BoardType(1L, "notice", "공지", "공지 게시판 전용");
 
             Board board = Board.builder()
                     .boardId(boardId)
@@ -495,7 +495,7 @@ public class BoardServiceImplTest {
             Long userId = 100L;
 
             Member writer = Member.builder().memberId(100L).build();
-            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+            BoardType boardType = new BoardType(1L, "notice", "공지", "공지 게시판 전용");
 
             Board board = Board.builder()
                     .boardId(boardId)
@@ -547,7 +547,7 @@ public class BoardServiceImplTest {
             Long userId = 100L;
 
             Member writer = Member.builder().memberId(100L).build();
-            BoardType boardType = new BoardType(1L, "공지", "공지 게시판 전용");
+            BoardType boardType = new BoardType(1L, "notice", "공지", "공지 게시판 전용");
 
             Board board = Board.builder()
                     .boardId(boardId)
