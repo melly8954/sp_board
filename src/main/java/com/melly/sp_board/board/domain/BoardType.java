@@ -17,6 +17,7 @@ public class BoardType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="board_type_id")
     private Long boardTypeId;
+    private String code;
     private String name;
     private String description;
 }

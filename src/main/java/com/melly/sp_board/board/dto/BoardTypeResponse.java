@@ -9,5 +9,6 @@ import lombok.Getter;
 @Builder
 public class BoardTypeResponse {
     private Long boardTypeId;
+    private String boardTypeCode;
     private String boardTypeName;
 }

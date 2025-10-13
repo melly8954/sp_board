@@ -20,6 +20,7 @@ public class BoardTypeServiceImpl implements BoardTypeService {
                 .stream()
                 .map(boardType -> BoardTypeResponse.builder()
                         .boardTypeId(boardType.getBoardTypeId())
+                        .boardTypeCode(boardType.getCode())
                         .boardTypeName(boardType.getName())
                         .build())
                 .toList();
