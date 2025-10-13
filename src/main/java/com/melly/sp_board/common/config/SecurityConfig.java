@@ -5,6 +5,7 @@ import com.melly.sp_board.auth.jwt.JwtProvider;
 import com.melly.sp_board.auth.security.CustomAuthenticationProvider;
 import com.melly.sp_board.common.trace.RequestTraceIdFilter;
 import com.melly.sp_board.member.repository.MemberRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -45,7 +51,24 @@ public class SecurityConfig {
                                 "/api/v1/auth/reissue").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(requestTraceIdFilter, UsernamePasswordAuthenticationFilter.class) // Trace ID 먼저
-                .addFilterBefore(new JwtFilter(jwtProvider, memberRepository, redisTemplate), UsernamePasswordAuthenticationFilter.class); // JWT 인증
+                .addFilterBefore(new JwtFilter(jwtProvider, memberRepository, redisTemplate), UsernamePasswordAuthenticationFilter.class) // JWT 인증
+                // 교차 출처 리소스 공유(CORS 요청 허용)
+                .cors((corsCustomizer -> corsCustomizer.configurationSource(new CorsConfigurationSource() {
+                    @Override
+                    public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+                        CorsConfiguration configuration = new CorsConfiguration();
+                        configuration.setAllowedOrigins(Arrays.asList(
+                                "http://localhost:5173",
+                                "https://cdiptangshu.github.io"
+                        ));
+                        configuration.setAllowedMethods(Collections.singletonList("*"));
+                        configuration.setAllowCredentials(true);
+                        configuration.setAllowedHeaders(Collections.singletonList("*"));
+                        configuration.setMaxAge(3600L);
+                        configuration.setExposedHeaders(Collections.singletonList("Authorization"));
+                        return configuration;
+                    }
+                })));
         return http.build();
     }
 
