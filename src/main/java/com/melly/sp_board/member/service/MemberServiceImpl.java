@@ -77,12 +77,13 @@ public class MemberServiceImpl implements MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "현재 접속 중인 사용자가 존재하지 않습니다."));
         FileMeta file = fileRepository.findByRelatedTypeAndRelatedId("member", memberId)
-                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 첨부파일은 존재하지 않습니다."));
+                .orElse(null);
+
         return MemberDto.builder()
                 .memberId(member.getMemberId())
                 .username(member.getUsername())
                 .name(member.getName())
-                .profileImage(file.getFilePath())
+                .profileImage(file != null ? file.getFilePath() : null)
                 .build();
     }
 }

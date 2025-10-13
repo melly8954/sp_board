@@ -49,6 +49,7 @@ public class SecurityConfig {
                                 "/api/v1/members",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/reissue").permitAll()
+                        .requestMatchers("/files/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(requestTraceIdFilter, UsernamePasswordAuthenticationFilter.class) // Trace ID 먼저
                 .addFilterBefore(new JwtFilter(jwtProvider, memberRepository, redisTemplate), UsernamePasswordAuthenticationFilter.class) // JWT 인증
