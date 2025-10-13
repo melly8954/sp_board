@@ -59,8 +59,8 @@ public class JwtFilter extends OncePerRequestFilter {
             sendErrorResponse(
                     response,
                     traceId,
-                    ErrorType.FORBIDDEN.getStatus().value(),
-                    ErrorType.FORBIDDEN.getErrorCode(),
+                    ErrorType.UNAUTHORIZED.getStatus().value(),
+                    ErrorType.UNAUTHORIZED.getErrorCode(),
                     "만료된 Access Token 입니다."
             );
             return;
@@ -75,8 +75,8 @@ public class JwtFilter extends OncePerRequestFilter {
             sendErrorResponse(
                     response,
                     traceId,
-                    ErrorType.FORBIDDEN.getStatus().value(),
-                    ErrorType.FORBIDDEN.getErrorCode(),
+                    ErrorType.UNAUTHORIZED.getStatus().value(),
+                    ErrorType.UNAUTHORIZED.getErrorCode(),
                     "유효하지 않은 Access Token 입니다."
             );
             return;
