@@ -10,6 +10,7 @@ import com.melly.sp_board.member.domain.MemberRole;
 import com.melly.sp_board.member.domain.MemberStatus;
 import com.melly.sp_board.member.dto.CreateMemberRequest;
 import com.melly.sp_board.member.dto.CreateMemberResponse;
+import com.melly.sp_board.member.dto.MemberDto;
 import com.melly.sp_board.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -67,6 +68,21 @@ public class MemberServiceImpl implements MemberService {
                 .name(member.getName())
                 .profileImageUrl(profileImageUrl)
                 .createdAt(member.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MemberDto getCurrentMember(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "현재 접속 중인 사용자가 존재하지 않습니다."));
+        FileMeta file = fileRepository.findByRelatedTypeAndRelatedId("member", memberId)
+                .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 첨부파일은 존재하지 않습니다."));
+        return MemberDto.builder()
+                .memberId(member.getMemberId())
+                .username(member.getUsername())
+                .name(member.getName())
+                .profileImage(file.getFilePath())
                 .build();
     }
 }
