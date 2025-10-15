@@ -14,13 +14,22 @@ import org.springframework.data.domain.Sort;
 public class SearchParamDto {
     private int page;
     private int size;
-    private String sortBy;        // 컬럼 이름
-    private String sortOrder;    // "asc" 또는 "desc"
+    private String sortBy;      // 정렬 기준 컬럼
+    private String sortOrder;   // asc or desc
 
     public Pageable getPageable() {
-        Sort sort = Sort.by((sortBy == null || sortBy.isBlank())? "createdAt" : sortBy);
-        boolean orderFlag = (sortOrder == null || sortOrder.isBlank()) || "desc".equalsIgnoreCase(sortOrder);
-        sort = orderFlag ? sort.descending() : sort.ascending();
-        return PageRequest.of(page - 1, size, sort);
+        // page 최소값 보정
+        int safePage = Math.max(page - 1, 0);
+
+        // sortBy 기본값 처리
+        String sortField = (sortBy == null || sortBy.isBlank()) ? "createdAt" : sortBy;
+
+        // sortOrder 기본값 desc
+        Sort.Direction direction = Sort.Direction.DESC;
+        if ("asc".equalsIgnoreCase(sortOrder)) {
+            direction = Sort.Direction.ASC;
+        }
+
+        return PageRequest.of(safePage, size, Sort.by(direction, sortField));
     }
 }
