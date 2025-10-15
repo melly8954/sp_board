@@ -19,7 +19,7 @@ public class SearchParamDto {
 
     public Pageable getPageable() {
         Sort sort = Sort.by((sortBy == null || sortBy.isBlank())? "createdAt" : sortBy);
-        boolean orderFlag = "desc".equalsIgnoreCase(sortOrder);
+        boolean orderFlag = (sortOrder == null || sortOrder.isBlank()) || "desc".equalsIgnoreCase(sortOrder);
         sort = orderFlag ? sort.descending() : sort.ascending();
         return PageRequest.of(page - 1, size, sort);
     }
