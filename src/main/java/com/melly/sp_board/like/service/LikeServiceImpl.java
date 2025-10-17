@@ -29,14 +29,18 @@ public class LikeServiceImpl implements LikeService {
 
     @Override
     @Transactional
-    public String toggleBoardLike(Long boardId, Long memberId) {
-        Member member = memberRepository.findById(memberId)
+    public String toggleBoardLike(Long boardId, Long currentUserId) {
+        Member member = memberRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 사용자는 존재하지 않습니다."));
         Board board = boardRepository.findByBoardIdAndStatus(boardId, BoardStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 게시글은 존재하지 않습니다."));
 
+        if (board.getWriter().getMemberId().equals(currentUserId)) {
+            throw new CustomException(ErrorType.FORBIDDEN, "자기 게시글에는 좋아요를 누를 수 없습니다.");
+        }
+
         String relatedType = "board";
-        Optional<Like> existing = likeRepository.findLike(relatedType, boardId, memberId);
+        Optional<Like> existing = likeRepository.findLike(relatedType, boardId, currentUserId);
 
         String message = "";
         if (existing.isPresent()) {
@@ -61,14 +65,18 @@ public class LikeServiceImpl implements LikeService {
 
     @Override
     @Transactional
-    public String toggleCommentLike(Long commentId, Long memberId) {
+    public String toggleCommentLike(Long commentId, Long currentUserId) {
         Comment comment = commentRepository.findByCommentIdAndStatus(commentId, CommentStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 댓글은 존재하지 않습니다."));
-        Member member = memberRepository.findById(memberId)
+        Member member = memberRepository.findById(currentUserId)
                 .orElseThrow(() -> new CustomException(ErrorType.NOT_FOUND, "해당 회원은 존재하지 않습니다."));
 
+        if (comment.getWriter().getMemberId().equals(currentUserId)) {
+            throw new CustomException(ErrorType.FORBIDDEN, "자기 댓글에는 좋아요를 누를 수 없습니다.");
+        }
+        
         String relatedType = "comment";
-        Optional<Like> existing = likeRepository.findLike(relatedType, commentId, memberId);
+        Optional<Like> existing = likeRepository.findLike(relatedType, commentId, currentUserId);
 
         String message = "";
         if (existing.isPresent()) {

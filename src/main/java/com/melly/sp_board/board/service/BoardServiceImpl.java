@@ -13,6 +13,7 @@ import com.melly.sp_board.filestorage.domain.FileMeta;
 import com.melly.sp_board.filestorage.dto.FileDto;
 import com.melly.sp_board.filestorage.repository.FileRepository;
 import com.melly.sp_board.filestorage.service.iface.FileService;
+import com.melly.sp_board.like.repository.LikeRepository;
 import com.melly.sp_board.member.domain.Member;
 import com.melly.sp_board.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class BoardServiceImpl implements BoardService {
     private final MemberRepository memberRepository;
     private final BoardRepository boardRepository;
     private final BoardTypeRepository boardTypeRepository;
+    private final LikeRepository likeRepository;
     private final FileService fileService;
     private final FileRepository fileRepository;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -172,6 +174,8 @@ public class BoardServiceImpl implements BoardService {
 
         String relatedType = "board_" + board.getBoardType().getName();
 
+        boolean isLiked = likeRepository.findLike("board", boardId, currentUserId).isPresent();
+
         List<FileDto> files = fileRepository.findAllByRelatedTypeAndRelatedId(relatedType, boardId)
                 .stream()
                 .map(f -> FileDto.builder()
@@ -196,6 +200,7 @@ public class BoardServiceImpl implements BoardService {
                 .writerName(board.getWriter().getName())
                 .isOwner(isOwner)
                 .isAdmin(isAdmin)
+                .isLiked(isLiked)
                 .viewCount(board.getViewCount())
                 .likeCount(board.getLikeCount())
                 .files(files)

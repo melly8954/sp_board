@@ -14,7 +14,7 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"owner", "admin"})
+@JsonIgnoreProperties({"owner", "admin", "liked"})
 public class BoardResponse {
     private Long boardId;
     private String boardType;
@@ -27,6 +27,8 @@ public class BoardResponse {
     private boolean isAdmin;
     private Integer viewCount;
     private Integer likeCount;
+    @JsonProperty("isLiked")
+    private boolean isLiked;
     private List<FileDto> files;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
