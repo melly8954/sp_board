@@ -30,11 +30,45 @@ public class FileServiceImpl implements FileService {
         return useLocal ? localStrategy : s3Strategy;
     }
 
+    // 이미지 MIME 타입 리스트
+    private static final List<String> ALLOWED_IMAGE_CONTENT_TYPES = List.of(
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/webp"
+    );
+
+    // 이미지 확장자 리스트
+    private static final List<String> ALLOWED_IMAGE_EXTENSIONS = List.of(
+            "jpg",
+            "jpeg",
+            "png",
+            "gif",
+            "webp"
+    );
+
+    // 허용 MIME 타입 예시
+    private static final List<String> ALLOWED_FILE_CONTENT_TYPES = List.of(
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/webp",
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "text/plain"
+    );
+
+    // 허용 확장자 예시
+    private static final List<String> ALLOWED_FILE_EXTENSIONS = List.of(
+            "jpg", "jpeg", "png", "gif", "webp",
+            "pdf", "doc", "docx", "txt"
+    );
+
     @Override
     public List<String> saveFiles(List<MultipartFile> files, String typeKey) {
-        if (files == null || files.isEmpty()) {
-            throw new CustomException(ErrorType.NOT_FOUND, "첨부 파일이 없습니다.");
-        }
+        // 업로드 전에 안전하게 검증
+        files.forEach(this::validateBoardFile);
 
         List<StoredFile> savedFiles = getStrategy().store(files, typeKey);
 
@@ -45,9 +79,8 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String saveFile(MultipartFile file, String typeKey) {
-        if (file == null || file.isEmpty()) {
-            throw new CustomException(ErrorType.NOT_FOUND, "첨부 파일이 없습니다.");
-        }
+        // 회원 대표 이미지 파일 검증
+        validateImageFile(file);
 
         StoredFile saved = getStrategy().store(file, typeKey);
         return getStrategy().generateFileUrl(saved, typeKey);
@@ -83,5 +116,50 @@ public class FileServiceImpl implements FileService {
         } catch (IOException e) {
             throw new RuntimeException("파일 삭제 실패: " + filePath, e);
         }
+    }
+
+    // 게시판 첨부파일 검증
+    private void validateBoardFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new CustomException(ErrorType.BAD_REQUEST, "첨부 파일이 존재하지 않습니다.");
+        }
+
+        // Content-Type 체크
+        String contentType = file.getContentType();
+        if (!ALLOWED_FILE_CONTENT_TYPES.contains(contentType)) {
+            throw new CustomException(ErrorType.BAD_REQUEST, "허용되지 않은 파일 형식입니다: " + contentType);
+        }
+
+        // 확장자 체크
+        String ext = getFileExtension(file.getOriginalFilename());
+        if (!ALLOWED_FILE_EXTENSIONS.contains(ext)) {
+            throw new CustomException(ErrorType.BAD_REQUEST, "허용되지 않은 파일 확장자입니다: " + ext);
+        }
+    }
+
+    // 이미지 파일 검증
+    private void validateImageFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new CustomException(ErrorType.BAD_REQUEST, "파일이 존재하지 않습니다.");
+        }
+
+        // Content-Type 체크
+        String contentType = file.getContentType();
+        if (!ALLOWED_IMAGE_CONTENT_TYPES.contains(contentType)) {
+            throw new CustomException(ErrorType.BAD_REQUEST, "허용되지 않은 이미지 형식입니다: " + contentType);
+        }
+
+        // 확장자 체크
+        String ext = getFileExtension(file.getOriginalFilename());
+        if (!ALLOWED_IMAGE_EXTENSIONS.contains(ext)) {
+            throw new CustomException(ErrorType.BAD_REQUEST, "허용되지 않은 이미지 확장자입니다: " + ext);
+        }
+    }
+    
+    // 파일 확장자 추출
+    private String getFileExtension(String filename) {
+        if (filename == null) return "";
+        int dotIndex = filename.lastIndexOf('.');
+        return (dotIndex == -1) ? "" : filename.substring(dotIndex + 1).toLowerCase();
     }
 }
