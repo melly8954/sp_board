@@ -62,7 +62,7 @@ public class BoardController implements ResponseController {
     @PatchMapping("/{boardId}")
     public ResponseEntity<ResponseDto<UpdateBoardResponse>> updateBoard(@PathVariable Long boardId,
                                                                         @RequestPart(value = "data") UpdateBoardRequest dto,
-                                                                        @RequestPart(value = "files") List<MultipartFile> newFiles,
+                                                                        @RequestPart(value = "files", required = false) List<MultipartFile> newFiles,
                                                                         @AuthenticationPrincipal PrincipalDetails principal) {
         String traceId = RequestTraceIdFilter.getTraceId();
         log.info("[게시글 수정 요청 API] TraceId={}", traceId);
