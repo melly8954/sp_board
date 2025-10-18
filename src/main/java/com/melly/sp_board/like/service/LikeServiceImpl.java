@@ -74,7 +74,7 @@ public class LikeServiceImpl implements LikeService {
         if (comment.getWriter().getMemberId().equals(currentUserId)) {
             throw new CustomException(ErrorType.FORBIDDEN, "자기 댓글에는 좋아요를 누를 수 없습니다.");
         }
-        
+
         String relatedType = "comment";
         Optional<Like> existing = likeRepository.findLike(relatedType, commentId, currentUserId);
 

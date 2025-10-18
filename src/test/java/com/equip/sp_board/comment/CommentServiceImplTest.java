@@ -21,7 +21,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -163,108 +164,110 @@ public class CommentServiceImplTest {
     @DisplayName("getCommentList() 메서드 테스트")
     class getCommentList {
         @Test
-        @DisplayName("성공 - 댓글 목록 조회 (상위 댓글만 존재")
-        void getCommentList_ParentsOnly() {
+        @DisplayName("성공 - 부모 댓글만 있고 자식 댓글 없는 경우")
+        void parentOnly() {
             // given
-            Long boardId = 1L;
-            Long currentUserId = 10L;
-
-            CommentFilter filter = CommentFilter.builder()
-                    .page(1)
-                    .size(1)
-                    .boardId(boardId)
+            Comment parent = Comment.builder()
+                    .commentId(1L)
+                    .content("부모 댓글")
+                    .writer(Member.builder().memberId(10L).name("작성자").build())
+                    .likeCount(0)
+                    .status(CommentStatus.ACTIVE)
                     .build();
 
-            Pageable pageable = filter.getPageable();
+            Page<Comment> parentPage = new PageImpl<>(List.of(parent), PageRequest.of(0, 10), 1);
 
-            // 테스트용 작성자
-            Member writer = Member.builder().memberId(1L).build();
+            when(commentRepository.findParentComments(any(), anyLong()))
+                    .thenReturn(parentPage);
+            when(commentRepository.findByBoard_BoardId(anyLong()))
+                    .thenReturn(List.of(parent)); // 자식 댓글 없음
 
-            // 부모 댓글
-            Comment parent1 = Comment.builder().commentId(100L).writer(writer).build();
-            List<Comment> parents = List.of(parent1);
-
-            Page<Comment> parentPage = mock(Page.class);
-            when(parentPage.getContent()).thenReturn(parents);
-            when(parentPage.getNumber()).thenReturn(0);
-            when(parentPage.getSize()).thenReturn(10);
-            when(parentPage.getTotalElements()).thenReturn(1L);
-            when(parentPage.getTotalPages()).thenReturn(1);
-            when(parentPage.getNumberOfElements()).thenReturn(1);
-            when(parentPage.isFirst()).thenReturn(true);
-            when(parentPage.isLast()).thenReturn(true);
-            when(parentPage.isEmpty()).thenReturn(false);
-
-            when(commentRepository.findParentComments(pageable, boardId, CommentStatus.ACTIVE)).thenReturn(parentPage);
-            when(commentRepository.findByParentCommentIdInAndStatus(List.of(100L), CommentStatus.ACTIVE))
-                    .thenReturn(List.of());
+            CommentFilter filter = new CommentFilter();
+            filter.setBoardId(100L);
+            filter.setPage(0);
+            filter.setSize(10);
 
             // when
-            PageResponseDto<CommentListResponse> result = commentService.getCommentList(filter, currentUserId);
+            PageResponseDto<CommentListResponse> result =
+                    commentService.getCommentList(filter, 10L);
 
             // then
-            assertThat(result).isNotNull();
             assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).getChildren()).isEmpty();
-
-            verify(commentRepository).findParentComments(pageable, boardId, CommentStatus.ACTIVE);
-            verify(commentRepository).findByParentCommentIdInAndStatus(List.of(100L), CommentStatus.ACTIVE);
+            CommentListResponse response = result.getContent().get(0);
+            assertThat(response.getCommentId()).isEqualTo(1L);
+            assertThat(response.getChildren()).isEmpty();
+            assertThat(response.getIsOwner()).isTrue();
         }
 
         @Test
-        @DisplayName("성공 - 댓글 목록 조회 (상위,하위 댓글 모두 존재")
-        void getCommentList_Success() {
+        @DisplayName("성공 - 부모 댓글과 자식 댓글 포함")
+        void parentWithChild() {
             // given
-            Long boardId = 1L;
-            Long currentUserId = 10L;
-
-            CommentFilter filter = CommentFilter.builder()
-                    .page(1)
-                    .size(1)
-                    .boardId(boardId)
+            Comment parent = Comment.builder()
+                    .commentId(1L)
+                    .content("부모 댓글")
+                    .writer(Member.builder().memberId(10L).name("작성자").build())
+                    .likeCount(0)
+                    .status(CommentStatus.ACTIVE)
                     .build();
 
-            Pageable pageable = filter.getPageable();
+            Comment child = Comment.builder()
+                    .commentId(2L)
+                    .content("자식 댓글")
+                    .writer(Member.builder().memberId(20L).name("자식 작성자").build())
+                    .likeCount(1)
+                    .status(CommentStatus.ACTIVE)
+                    .parent(parent)
+                    .build();
 
-            // 테스트용 작성자
-            Member writer = Member.builder().memberId(1L).build();
+            Page<Comment> parentPage = new PageImpl<>(List.of(parent), PageRequest.of(0, 10), 1);
 
-            // 부모 댓글
-            Comment parent1 = Comment.builder().commentId(100L).writer(writer).build();
-            Comment parent2 = Comment.builder().commentId(101L).writer(writer).build();
-            List<Comment> parents = List.of(parent1, parent2);
+            when(commentRepository.findParentComments(any(), anyLong()))
+                    .thenReturn(parentPage);
+            when(commentRepository.findByBoard_BoardId(anyLong()))
+                    .thenReturn(List.of(parent, child));
 
-            // 자식 댓글
-            Comment child1 = Comment.builder().commentId(200L).parent(parent1).writer(writer).build();
-            Comment child2 = Comment.builder().commentId(201L).parent(parent2).writer(writer).build();
-            List<Comment> children = List.of(child1, child2);
-
-            Page<Comment> parentPage = mock(Page.class);
-            when(parentPage.getContent()).thenReturn(parents);
-            when(parentPage.getNumber()).thenReturn(0);
-            when(parentPage.getSize()).thenReturn(10);
-            when(parentPage.getTotalElements()).thenReturn(2L);
-            when(parentPage.getTotalPages()).thenReturn(1);
-            when(parentPage.getNumberOfElements()).thenReturn(2);
-            when(parentPage.isFirst()).thenReturn(true);
-            when(parentPage.isLast()).thenReturn(true);
-            when(parentPage.isEmpty()).thenReturn(false);
-
-            when(commentRepository.findParentComments(pageable, boardId, CommentStatus.ACTIVE)).thenReturn(parentPage);
-            when(commentRepository.findByParentCommentIdInAndStatus(List.of(100L, 101L), CommentStatus.ACTIVE))
-                    .thenReturn(children);
+            CommentFilter filter = new CommentFilter();
+            filter.setBoardId(100L);
+            filter.setPage(0);
+            filter.setSize(10);
 
             // when
-            PageResponseDto<CommentListResponse> result = commentService.getCommentList(filter, currentUserId);
+            PageResponseDto<CommentListResponse> result =
+                    commentService.getCommentList(filter, 10L);
 
             // then
-            assertThat(result).isNotNull();
-            assertThat(result.getContent()).hasSize(2);
-            assertThat(result.getTotalElements()).isEqualTo(2);
-            assertThat(result.getPage()).isEqualTo(1);
+            assertThat(result.getContent()).hasSize(1);
+            CommentListResponse parentResponse = result.getContent().get(0);
+            assertThat(parentResponse.getChildren()).hasSize(1);
 
-            verify(commentRepository).findParentComments(pageable, boardId, CommentStatus.ACTIVE);
-            verify(commentRepository).findByParentCommentIdInAndStatus(List.of(100L, 101L), CommentStatus.ACTIVE);
+            CommentListResponse childResponse = parentResponse.getChildren().get(0);
+            assertThat(childResponse.getCommentId()).isEqualTo(2L);
+            assertThat(childResponse.getChildren()).isEmpty();
+            assertThat(childResponse.getIsOwner()).isFalse();
+        }
+
+        @Test
+        @DisplayName("성공 - 빈 댓글 창")
+        void noParentComments() {
+            // given
+            Page<Comment> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
+
+            when(commentRepository.findParentComments(any(), anyLong()))
+                    .thenReturn(emptyPage);
+
+            CommentFilter filter = new CommentFilter();
+            filter.setBoardId(100L);
+            filter.setPage(0);
+            filter.setSize(10);
+
+            // when
+            PageResponseDto<CommentListResponse> result =
+                    commentService.getCommentList(filter, 10L);
+
+            // then
+            assertThat(result.getContent()).isEmpty();
+            assertThat(result.isEmpty()).isTrue();
         }
     }
 

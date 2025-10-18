@@ -18,10 +18,9 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
         SELECT c
         FROM Comment c
         WHERE c.board.boardId = :boardId
-            AND c.status = :status
             AND c.parent IS NULL
     """)
-    Page<Comment> findParentComments(Pageable pageable, @Param("boardId") Long boardId, @Param("status") CommentStatus status);
+    Page<Comment> findParentComments(Pageable pageable, @Param("boardId") Long boardId);
 
-    List<Comment> findByParentCommentIdInAndStatus(List<Long> parentIds, CommentStatus commentStatus);
+    List<Comment> findByBoard_BoardId(Long boardId);
 }

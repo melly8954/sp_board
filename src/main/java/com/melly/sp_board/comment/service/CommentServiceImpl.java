@@ -67,22 +67,27 @@ public class CommentServiceImpl implements CommentService {
     public PageResponseDto<CommentListResponse> getCommentList(CommentFilter filter, Long currentUserId) {
         Pageable pageable = filter.getPageable();
 
-        Page<Comment> page = commentRepository.findParentComments(pageable, filter.getBoardId(), CommentStatus.ACTIVE);
-        List<Comment> parentComments = page.getContent();
+        // DB 부모 댓글만 페이징 조회
+        Page<Comment> parentPage = commentRepository.findParentComments(pageable, filter.getBoardId());
+        List<Comment> parentComments = parentPage.getContent();
 
         // 부모 댓글 ID 추출
         List<Long> parentIds = parentComments.stream()
                 .map(Comment::getCommentId)
                 .toList();
 
-        // 부모 댓글의 모든 자식 댓글 조회
-        List<Comment> childComments = commentRepository.findByParentCommentIdInAndStatus(parentIds, CommentStatus.ACTIVE);
+        // 부모 댓글에 해당하는 자식 댓글만 조회
+        List<Comment> allChildComments = parentIds.isEmpty() ? List.of() :
+                commentRepository.findByBoard_BoardId(filter.getBoardId())
+                        .stream()
+                        .filter(c -> c.getParent() != null)
+                        .toList();
 
-        // 부모 ID 기준으로 그룹화
-        Map<Long, List<Comment>> childMap = childComments.stream()
+        // 부모 ID 기준으로 그룹화 (재귀적으로 손자까지 구성 가능)
+        Map<Long, List<Comment>> childMap = allChildComments.stream()
                 .collect(Collectors.groupingBy(c -> c.getParent().getCommentId()));
 
-        // 부모 댓글 기준 트리 생성
+        // 부모 댓글 기준 트리 구성
         List<CommentListResponse> roots = parentComments.stream()
                 .map(parent -> buildTree(parent, currentUserId, childMap))
                 .toList();
@@ -90,14 +95,14 @@ public class CommentServiceImpl implements CommentService {
         // 페이지 DTO 반환
         return PageResponseDto.<CommentListResponse>builder()
                 .content(roots)
-                .page(page.getNumber() + 1)
-                .size(page.getSize())
-                .totalElements(page.getTotalElements())
-                .totalPages(page.getTotalPages())
-                .numberOfElements(page.getNumberOfElements())
-                .first(page.isFirst())
-                .last(page.isLast())
-                .empty(page.isEmpty())
+                .page(parentPage.getNumber() + 1)
+                .size(parentPage.getSize())
+                .totalElements(parentPage.getTotalElements())
+                .totalPages(parentPage.getTotalPages())
+                .numberOfElements(parentPage.getNumberOfElements())
+                .first(parentPage.isFirst())
+                .last(parentPage.isLast())
+                .empty(parentPage.isEmpty())
                 .build();
     }
 
@@ -142,6 +147,7 @@ public class CommentServiceImpl implements CommentService {
                 .isOwner(parent.getWriter().getMemberId().equals(currentUserId))
                 .content(parent.getContent())
                 .likeCount(parent.getLikeCount())
+                .status(parent.getStatus().name())
                 .createdAt(parent.getCreatedAt())
                 .children(children)
                 .build();

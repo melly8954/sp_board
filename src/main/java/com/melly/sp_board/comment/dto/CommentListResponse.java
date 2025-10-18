@@ -19,6 +19,7 @@ public class CommentListResponse {
     private Boolean isOwner;
     private String content;
     private Integer likeCount;
+    private String status;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
     @Builder.Default

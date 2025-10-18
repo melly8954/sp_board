@@ -49,8 +49,11 @@ public class LikeServiceImplTest {
             Long memberId = 10L;
 
             Member member = Member.builder().memberId(memberId).build();
+            Member writer = Member.builder().memberId(20L).build();
+
             Board board = Board.builder()
                     .boardId(boardId)
+                    .writer(writer)
                     .likeCount(0)
                     .status(BoardStatus.ACTIVE)
                     .build();
@@ -75,8 +78,11 @@ public class LikeServiceImplTest {
             Long memberId = 10L;
 
             Member member = Member.builder().memberId(memberId).build();
+            Member writer = Member.builder().memberId(20L).build();
+
             Board board = Board.builder()
                     .boardId(boardId)
+                    .writer(writer)
                     .likeCount(1)
                     .status(BoardStatus.ACTIVE)
                     .build();
@@ -155,8 +161,11 @@ public class LikeServiceImplTest {
             Long memberId = 10L;
 
             Member member = Member.builder().memberId(memberId).build();
+            Member writer = Member.builder().memberId(20L).build();
+
             Comment comment = Comment.builder()
                     .commentId(commentId)
+                    .writer(writer)
                     .likeCount(0)
                     .status(CommentStatus.ACTIVE)
                     .build();
@@ -184,8 +193,11 @@ public class LikeServiceImplTest {
             Long memberId = 10L;
 
             Member member = Member.builder().memberId(memberId).build();
+            Member writer = Member.builder().memberId(20L).build();
+
             Comment comment = Comment.builder()
                     .commentId(commentId)
+                    .writer(writer)
                     .likeCount(1)
                     .status(CommentStatus.ACTIVE)
                     .build();

@@ -13,6 +13,7 @@ import com.melly.sp_board.common.exception.ErrorType;
 import com.melly.sp_board.filestorage.domain.FileMeta;
 import com.melly.sp_board.filestorage.repository.FileRepository;
 import com.melly.sp_board.filestorage.service.iface.FileService;
+import com.melly.sp_board.like.repository.LikeRepository;
 import com.melly.sp_board.member.domain.Member;
 import com.melly.sp_board.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -46,6 +47,7 @@ public class BoardServiceImplTest {
     @Mock MemberRepository memberRepository;
     @Mock BoardRepository boardRepository;
     @Mock BoardTypeRepository boardTypeRepository;
+    @Mock LikeRepository likeRepository;
     @Mock FileService fileService;
     @Mock FileRepository fileRepository;
     @Mock RedisTemplate<String, Object> redisTemplate;
@@ -179,7 +181,7 @@ public class BoardServiceImplTest {
         void searchBoard_Success() {
             // given
             BoardFilter filter = BoardFilter.builder()
-                    .boardTypeId(1L)
+                    .boardTypeCode("notice")
                     .searchKeyword("테스트")
                     .searchType("title")
                     .page(1)
@@ -243,7 +245,6 @@ public class BoardServiceImplTest {
         void searchBoard_Success_Empty() {
             // given
             BoardFilter filter = BoardFilter.builder()
-                    .boardTypeId(1L)
                     .page(1)
                     .size(10)
                     .build();
@@ -280,13 +281,17 @@ public class BoardServiceImplTest {
     @Nested
     @DisplayName("getBoard() 테스트")
     class GetBoard {
+        Long currentUserId = 100L;
+        Member member = Member.builder()
+                .memberId(currentUserId)
+                .name("testUser")
+                .build();
+
         @Test
         @DisplayName("성공 - 게시글 상세 조회 (첫 조회)")
         void getBoard_FirstView_IncreasesViewCount() {
             // given
             Long boardId = 1L;
-            Long userId = 100L;
-
             Member writer = Member.builder().memberId(200L).build();
             BoardType boardType = new BoardType(1L, "notice", "공지", "공지 게시판 전용");
 
@@ -299,16 +304,16 @@ public class BoardServiceImplTest {
 
             when(boardRepository.findByBoardIdAndStatus(boardId, BoardStatus.ACTIVE))
                     .thenReturn(Optional.of(board));
-
+            when(memberRepository.findById(currentUserId)).thenReturn(Optional.of(member));
             when(redisTemplate.opsForSet()).thenReturn(setOperations);
             when(setOperations.add(anyString(), any())).thenReturn(1L);
             when(redisTemplate.getExpire(anyString(), eq(TimeUnit.SECONDS))).thenReturn(-1L);
-
+            when(likeRepository.findLike("board", boardId, currentUserId)).thenReturn(Optional.empty());
             when(fileRepository.findAllByRelatedTypeAndRelatedId(anyString(), eq(boardId)))
                     .thenReturn(List.of());
 
             // when
-            BoardResponse result = boardService.getBoard(boardId, userId);
+            BoardResponse result = boardService.getBoard(boardId, currentUserId);
 
             // then
             assertThat(result).isNotNull();
@@ -316,7 +321,7 @@ public class BoardServiceImplTest {
             assertThat(result.isOwner()).isFalse();
             assertThat(result.getViewCount()).isEqualTo(1);
 
-            verify(setOperations).add(eq("board:viewed:" + boardId), eq(userId.toString()));
+            verify(setOperations).add(eq("board:viewed:" + boardId), eq(currentUserId.toString()));
             verify(redisTemplate).expire(anyString(), eq(24L), eq(TimeUnit.HOURS));
         }
 
@@ -339,9 +344,10 @@ public class BoardServiceImplTest {
 
             when(boardRepository.findByBoardIdAndStatus(boardId, BoardStatus.ACTIVE))
                     .thenReturn(Optional.of(board));
+            when(memberRepository.findById(currentUserId)).thenReturn(Optional.of(member));
             when(redisTemplate.opsForSet()).thenReturn(setOperations);
             when(setOperations.add(anyString(), any())).thenReturn(1L);
-
+            when(likeRepository.findLike("board", boardId, currentUserId)).thenReturn(Optional.empty());
             when(fileRepository.findAllByRelatedTypeAndRelatedId(anyString(), eq(boardId)))
                     .thenReturn(List.of());
             // when
@@ -374,6 +380,8 @@ public class BoardServiceImplTest {
 
             when(boardRepository.findByBoardIdAndStatus(boardId, BoardStatus.ACTIVE))
                     .thenReturn(Optional.of(board));
+            when(memberRepository.findById(currentUserId)).thenReturn(Optional.of(member));
+            when(likeRepository.findLike("board", boardId, currentUserId)).thenReturn(Optional.empty());
             when(fileRepository.findAllByRelatedTypeAndRelatedId(anyString(), eq(boardId)))
                     .thenReturn(List.of());
             // when
