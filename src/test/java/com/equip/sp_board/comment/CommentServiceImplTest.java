@@ -11,6 +11,8 @@ import com.melly.sp_board.comment.service.CommentServiceImpl;
 import com.melly.sp_board.common.dto.PageResponseDto;
 import com.melly.sp_board.common.exception.CustomException;
 import com.melly.sp_board.common.exception.ErrorType;
+import com.melly.sp_board.like.domain.Like;
+import com.melly.sp_board.like.repository.LikeRepository;
 import com.melly.sp_board.member.domain.Member;
 import com.melly.sp_board.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +40,7 @@ public class CommentServiceImplTest {
     @Mock CommentRepository commentRepository;
     @Mock MemberRepository memberRepository;
     @Mock BoardRepository boardRepository;
+    @Mock LikeRepository likeRepository;
 
     @InjectMocks CommentServiceImpl commentService;
 
@@ -181,6 +184,8 @@ public class CommentServiceImplTest {
                     .thenReturn(parentPage);
             when(commentRepository.findByBoard_BoardId(anyLong()))
                     .thenReturn(List.of(parent)); // 자식 댓글 없음
+            when(likeRepository.findLike(anyString(), anyLong(), anyLong()))
+                    .thenReturn(Optional.empty()); // 좋아요 안 눌림
 
             CommentFilter filter = new CommentFilter();
             filter.setBoardId(100L);
@@ -220,12 +225,24 @@ public class CommentServiceImplTest {
                     .parent(parent)
                     .build();
 
+            Member member = Member.builder()
+                    .memberId(1L)
+                    .build();
+            Like like = Like.builder()
+                    .likeId(1L)
+                    .relatedType("comment")
+                    .relatedId(1L)
+                    .member(member)
+                    .build();
+
             Page<Comment> parentPage = new PageImpl<>(List.of(parent), PageRequest.of(0, 10), 1);
 
             when(commentRepository.findParentComments(any(), anyLong()))
                     .thenReturn(parentPage);
             when(commentRepository.findByBoard_BoardId(anyLong()))
                     .thenReturn(List.of(parent, child));
+            when(likeRepository.findLike(anyString(), anyLong(), anyLong()))
+                    .thenReturn(Optional.of(like));
 
             CommentFilter filter = new CommentFilter();
             filter.setBoardId(100L);
