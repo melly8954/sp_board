@@ -10,6 +10,7 @@ import com.melly.sp_board.comment.repository.CommentRepository;
 import com.melly.sp_board.common.dto.PageResponseDto;
 import com.melly.sp_board.common.exception.CustomException;
 import com.melly.sp_board.common.exception.ErrorType;
+import com.melly.sp_board.like.repository.LikeRepository;
 import com.melly.sp_board.member.domain.Member;
 import com.melly.sp_board.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepository;
     private final MemberRepository memberRepository;
     private final BoardRepository boardRepository;
+    private final LikeRepository likeRepository;
 
     @Override
     @Transactional
@@ -135,6 +137,9 @@ public class CommentServiceImpl implements CommentService {
 
     // 댓글 트리 구조 헬퍼 메서드
     private CommentListResponse buildTree(Comment parent, Long currentUserId, Map<Long, List<Comment>> childMap) {
+        // 좋아요 여부 확인
+        boolean isLiked = likeRepository.findLike("comment", parent.getCommentId(), currentUserId).isPresent();
+
         List<CommentListResponse> children = childMap.getOrDefault(parent.getCommentId(), List.of())
                 .stream()
                 .map(child -> buildTree(child, currentUserId, childMap))
@@ -146,6 +151,7 @@ public class CommentServiceImpl implements CommentService {
                 .writerName(parent.getWriter().getName())
                 .isOwner(parent.getWriter().getMemberId().equals(currentUserId))
                 .content(parent.getContent())
+                .isLiked(isLiked)
                 .likeCount(parent.getLikeCount())
                 .status(parent.getStatus().name())
                 .createdAt(parent.getCreatedAt())
