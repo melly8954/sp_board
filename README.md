@@ -33,17 +33,17 @@ REDIS_HOST_PORT=6380
 
 **3️⃣ DB 실행 (Docker Compose)**
 ```bash
-docker-compose up -d
+docker-compose -f docker/docker-compose.yml --env-file .env -p spring-board up -d
 ```
 
 
 **4️⃣ Docker 이미지 빌드**
 ```bash
-docker build -t sp_board:latest .
+docker build -f docker/Dockerfile -t sp_board:latest .
 ```
 
 **5️⃣ 애플리케이션 실행**
 ```bash
-docker run -p 8080:8080 --network sp_board_default --env-file .env -e "SPRING_PROFILES_ACTIVE=docker" --name spring-board-app equip-rental:latest
+docker run -p 8080:8080 --network spring-board_default --env-file .env -e "SPRING_PROFILES_ACTIVE=docker" --name spring-board-app sp_board:latest
 ```
 <hr>
